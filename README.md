@@ -12,9 +12,9 @@ So, Welcome to Brython. Can you lead the people through these turbulent times?
 
 ## Components
 
-* [Zepto](http://zeptojs.com) ([Git Repo](https://github.com/madrobby/zepto))
+* [Zepto](https://github.com/madrobby/zepto) ([Documentation](http://zeptojs.com))
 * [phaser](https://github.com/photonstorm/phaser)
 * [onScreen](https://github.com/silvestreh/onScreen)
 * [jquery.swipe-events.js](https://github.com/eikes/jquery.swipe-events.js)
 * [onepage-scroll](https://github.com/peachananr/onepage-scroll)
-* [Bootstrap](http://getbootstrap.com) ([Git Repo](https://github.com/twbs/bootstrap))
+* [Bootstrap](https://github.com/twbs/bootstrap) ([Documentation](http://getbootstrap.com))
