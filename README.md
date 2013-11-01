@@ -1,12 +1,12 @@
-# HTML5 Game
+# Brython
 
-## Intro
+Welcome to Brython, a land of simple farmers. The Romans call this land Britannia like they own it, but they leave us alone as
+long we leave them alone. A nice thing about a large protective force is that our land has been at peace for more than three
+centuries. But the world is changing. More and more Roman legionaries are redeploying to their troubled provinces in the east.
+Trade with the rest of the empire is becoming more and more sporadic as civil wars ravage throughout the empire in the name of
+one general or another. Barbarians from the north and across the seas are raiding the countryside.
 
-Welcome to Armitonia, the greatest empire the world has ever known. For a thousand years Armitonia has withstood disasters,
-plagues, invasions, and cat overpopulation. But the world is always changing. There is an emerging world power threatening our
-place as sole world leader. At home, our once glorious economy is faultering due to corruption and external forces. The people
-grow weary of failed policies and are losing faith. This great nation needs a new leader who can unite the people and restore
-our rightful place in the world. Can you lead our nation through these troubled times?
+So, Welcome to Brython. Can you lead the people through these turbulent times?
 
 ## How to Play
 
