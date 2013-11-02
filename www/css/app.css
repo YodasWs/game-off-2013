@@ -1,0 +1,30 @@
+﻿main {
+	width: calc(100% - 2em); max-width: 700px; margin: 0 auto;
+}
+
+body > header {
+	margin: 0; background: lightgrey;
+}
+body > header > h1 {
+	line-height: 1.6em; margin: 0;
+}
+
+@media mobile, screen and (max-width: 500px) {
+	body > header {
+		text-align: left;
+		background-color: lightblue;
+		transition: background-color 2s;
+	}
+	body > header > h1 {
+	}
+	main { text-align: justify; }
+}
+@media screen and (min-width: 500px) {
+	body > header {
+		text-align: center;
+		background: lightgrey;
+		transition: background-color 2;
+	}
+	body > header > h1 {
+	}
+}
