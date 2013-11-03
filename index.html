@@ -15,20 +15,24 @@
 <script src="www/res/phaser.min.js"></script>
 <script>
 var world = [
-	{terrain:'grass',x:100,y:100},
-	{terrain:'grass',x:250,y:100},
-	{terrain:'grass',x:400,y:100},
-	{terrain:'grass',x:175,y:144},
-	{terrain:'grass',x:325,y:144},
-	{terrain:'grass',x:100,y:188},
-	{terrain:'grass',x:250,y:188},
-	{terrain:'grass',x:400,y:188}
+	{terrain:'grass',x:100,y:95},
+	{terrain:'grass',x:248,y:95},
+	{terrain:'grass',x:396,y:95},
+	{terrain:'grass',x:174,y:138},
+	{terrain:'grass',x:322,y:138},
+	{terrain:'grass',x:100,y:181},
+	{terrain:'grass',x:248,y:181},
+	{terrain:'grass',x:396,y:181},
+	{terrain:'grass',x:174,y:224},
+	{terrain:'grass',x:322,y:224}
 ];
-//$(document).ready(function() {
-var game = new Phaser.Game(640, 480, Phaser.AUTO, 'main', {
+$(document).ready(function() {
+var width = Math.max(Math.min($(document).width() * .95, 900), 600);
+var game = new Phaser.Game(width, Math.floor(width * 9 / 16), Phaser.AUTO, 'main', {
 preload : function() {
 	game.load.image('background', 'www/img/terrain/grass.jpg'); // TODO: Get water/sea background
 	game.load.image('grass', 'www/img/tiles/grass.png');
+game.stage.backgroundColor = 'lightseagreen';
 },
 create : function() {
 /*	// Add Background and Scale to Size
@@ -45,7 +49,7 @@ create : function() {
 update : function() {
 }
 }); // end new Phaser.Game
-//}); // end document.ready
+}); // end document.ready
 </script>
 </head>
 <body>
