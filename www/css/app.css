@@ -8,6 +8,9 @@ body > header {
 body > header > h1 {
 	line-height: 1.6em; margin: 0;
 }
+body > canvas {
+	margin: 1em auto;
+}
 
 @media mobile, screen and (max-width: 500px) {
 	body > header {
