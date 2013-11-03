@@ -8,7 +8,25 @@
 <link rel="stylesheet" href="www/res/bootstrap.min.css"/>
 <link rel="stylesheet" href="www/css/app.css"/>
 <script src="www/res/zepto.min.js"></script>
+<!--
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+-->
 <script src="www/res/bootstrap.min.js"></script>
+<script src="www/res/phaser.min.js"></script>
+<script>
+$(document).ready(function() {
+var game = new Phaser.Game(640, 480, Phaser.AUTO, $('p').get(0), {
+preload : function() {
+//	game.load.image('background', 'www/img/terrain/grass.jpg'); // TODO: Get water/sea background
+},
+create : function() {
+//	game.add.tileSprite(0, 0, 640, 480, 'background');
+},
+update : function() {
+}
+});
+});
+</script>
 </head>
 <body>
 <header><h1>Brython</h1></header>
