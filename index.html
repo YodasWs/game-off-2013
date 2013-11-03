@@ -4,7 +4,7 @@
 <title>Brython</title>
 <meta charset="UTF-8"/>
 <meta name="format-detection" content="telephone=no"/>
-<meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
+<meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height" />
 <link rel="stylesheet" href="www/res/bootstrap.min.css"/>
 <link rel="stylesheet" href="www/css/app.css"/>
 <script src="www/res/zepto.min.js"></script>
@@ -14,18 +14,38 @@
 <script src="www/res/bootstrap.min.js"></script>
 <script src="www/res/phaser.min.js"></script>
 <script>
-$(document).ready(function() {
-var game = new Phaser.Game(640, 480, Phaser.AUTO, $('p').get(0), {
+var world = [
+	{terrain:'grass',x:100,y:100},
+	{terrain:'grass',x:250,y:100},
+	{terrain:'grass',x:400,y:100},
+	{terrain:'grass',x:175,y:144},
+	{terrain:'grass',x:325,y:144},
+	{terrain:'grass',x:100,y:188},
+	{terrain:'grass',x:250,y:188},
+	{terrain:'grass',x:400,y:188}
+];
+//$(document).ready(function() {
+var game = new Phaser.Game(640, 480, Phaser.AUTO, 'main', {
 preload : function() {
-//	game.load.image('background', 'www/img/terrain/grass.jpg'); // TODO: Get water/sea background
+	game.load.image('background', 'www/img/terrain/grass.jpg'); // TODO: Get water/sea background
+	game.load.image('grass', 'www/img/tiles/grass.png');
 },
 create : function() {
-//	game.add.tileSprite(0, 0, 640, 480, 'background');
+/*	// Add Background and Scale to Size
+	var background = game.add.tileSprite(0, 0, 1024, 1024, 'background');
+	background.scale.y = game.height / background.height;
+	background.scale.x = game.width / background.width;
+//*/
+	$.each(world, function(i, item) {
+		$.extend(world[i], game.add.tileSprite(item.x - 100, item.y - 100, 200, 200, item.terrain));
+		world[i].scale.x = .5;
+		world[i].scale.y = .5;
+	});
 },
 update : function() {
 }
-});
-});
+}); // end new Phaser.Game
+//}); // end document.ready
 </script>
 </head>
 <body>
