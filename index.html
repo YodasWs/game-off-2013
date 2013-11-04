@@ -21,6 +21,7 @@ var game = new Phaser.Game(width, Math.floor(width * 16 / 9), Phaser.AUTO, 'main
 preload : function() {
 //	game.load.image('background', 'www/img/terrain/grass.jpg'); // TODO: Get water/sea background
 	game.load.image('grass', 'www/img/tiles/grass.png');
+	game.load.image('water', 'www/img/tiles/water.png');
 	game.stage.backgroundColor = 'lightseagreen';
 },
 create : function() {
@@ -35,6 +36,9 @@ create : function() {
 		$.extend(world[i], game.add.tileSprite(x, y, 200, 200, item.terrain));
 		world[i].scale.x = .5;
 		world[i].scale.y = .5;
+		game.add.text(x+30, y+50, world[i].col + '×' + world[i].row, {
+			font: '12pt Arial', fill: 'black', align: 'center', outline: 'white'
+		});
 	});
 },
 update : function() {
