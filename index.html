@@ -13,15 +13,25 @@
 -->
 <script src="www/res/bootstrap.min.js"></script>
 <script src="www/res/phaser.min.js"></script>
-<script src="www/js/world.js"></script>
+<script src="www/js/world.js" async></script>
 <script>
 $(document).ready(function() {
+// Global Variables
 var width = Math.max(Math.min($(document).width() * .95, 900), 600);
+var scale = { x:.5, y:.5 };
+
+// Build Game
 var game = new Phaser.Game(width, Math.floor(width * 16 / 9), Phaser.AUTO, 'main', {
 preload : function() {
 //	game.load.image('background', 'www/img/terrain/grass.jpg'); // TODO: Get water/sea background
-	game.load.image('grass', 'www/img/tiles/grass.png');
-	game.load.image('water', 'www/img/tiles/water.png');
+	// Load Terrain Images
+	$.each(['grass', 'water'], function(i, val) {
+		game.load.image('tile.' + val, 'www/img/tiles/' + val + '.png');
+	});
+	// Load Overlay Images
+	$.each(['roman', 'britton', 'saxon'], function(i, val) {
+		game.load.image('city.' + val, 'www/img/overlays/city-' + val + '.png');
+	});
 	game.stage.backgroundColor = 'lightseagreen';
 },
 create : function() {
@@ -30,15 +40,22 @@ create : function() {
 	background.scale.y = game.height / background.height;
 	background.scale.x = game.width / background.width;
 //*/
+	// Build the Board
 	$.each(world, function(i, item) {
 		var x = item.col * 74 + 20;
 		var y = item.row * 86 + (item.col % 2 ? 43 : 0);
-		$.extend(world[i], game.add.tileSprite(x, y, 200, 200, item.terrain));
-		world[i].scale.x = .5;
-		world[i].scale.y = .5;
+		$.extend(world[i], game.add.tileSprite(x, y, 200, 200, 'tile.' + item.terrain));
+		world[i].scale.x = scale.x;
+		world[i].scale.y = scale.y;
 		game.add.text(x+30, y+50, world[i].col + '×' + world[i].row, {
-			font: '12pt Arial', fill: 'black', align: 'center', outline: 'white'
+			font: '12pt Arial', fill: 'black', align: 'center'
 		});
+		// Add City Overlay
+		if (world[i].city) {
+			world[i].overlay = game.add.tileSprite(x, y, 200, 200, 'city.' + world[i].city);
+			world[i].overlay.scale.x = scale.x;
+			world[i].overlay.scale.y = scale.y;
+		}
 	});
 },
 update : function() {
