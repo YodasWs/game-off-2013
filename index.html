@@ -20,6 +20,7 @@ $(document).ready(function() {
 // Global Variables
 var width = Math.max(Math.min($(document).width() * .95, 900), 600);
 var scale = { x:.5, y:.5 };
+var activeUnit = -1;
 
 // Build Game
 var game = new Phaser.Game(width, Math.floor(width * 16 / 9), Phaser.AUTO, 'main', {
@@ -49,14 +50,16 @@ create : function() {
 		var x = item.col * 74 + 20;
 		var y = item.row * 86 + (item.col % 2 ? 43 : 0);
 		$.extend(world[i], game.add.tileSprite(x, y, 200, 200, 'tile.' + item.terrain));
-		world[i].scale = scale;
+		world[i].scale.x = scale.x;
+		world[i].scale.y = scale.y;
 		game.add.text(x+30, y+50, world[i].col + '×' + world[i].row, {
-			font: '12pt Arial', fill: 'black', align: 'center'
+			font: '12pt Arial', fill: 'lightgrey', align: 'center'
 		});
 		// Add City Overlay
 		if (world[i].city) {
 			world[i].overlay = game.add.tileSprite(x, y, 200, 200, 'city.' + world[i].city);
-			world[i].overlay.scale = scale;
+			world[i].overlay.scale.x = scale.x;
+			world[i].overlay.scale.y = scale.y;
 		}
 	});
 
@@ -66,10 +69,54 @@ create : function() {
 		var y = unit.row * 86 + (unit.col % 2 ? 43 : 0);
 		$.extend(units[i], game.add.sprite(x, y, 'unit.' + unit.faction + '.' + unit.type));
 		units[i].anchor = {x:.5,y:.5};
-		units[i].scale = scale;
+		units[i].scale.x = scale.x;
+		units[i].scale.y = scale.y;
+if (unit.faction == 'britton') activeUnit = i;
 	});
+game.input.keyboard.addKeyCapture([
+	Phaser.Keyboard.U,
+	Phaser.Keyboard.I,
+	Phaser.Keyboard.O,
+	Phaser.Keyboard.J,
+	Phaser.Keyboard.K,
+	Phaser.Keyboard.L
+]);
+game.input.keyboard.addCallbacks(game, function(event) {
+	// On Key Down
+	if (!(activeUnit >= 0)) return false;
+	switch (event.keyCode) {
+	case Phaser.Keyboard.U:
+		if (units[activeUnit].col % 2)
+			units[activeUnit].row++;
+		units[activeUnit].col--;
+		break;
+	case Phaser.Keyboard.I:
+		units[activeUnit].row++;
+		break;
+	case Phaser.Keyboard.O:
+		units[activeUnit].col++;
+		break;
+	case Phaser.Keyboard.J:
+		units[activeUnit].col--;
+		break;
+	case Phaser.Keyboard.K:
+		units[activeUnit].row--;
+		break;
+	case Phaser.Keyboard.L:
+		units[activeUnit].col++;
+		break;
+	default:
+		return false;
+	}
+//console.log('moving to ' + units[activeUnit].col + 'x' + units[activeUnit].row);
+	units[activeUnit].x = units[activeUnit].col * 74 + 20;
+	units[activeUnit].y = units[activeUnit].row * 86 + (units[activeUnit].col % 2 ? 43 : 0);
+});
 },
 update : function() {
+},
+render : function() {
+//game.debug.renderText('hello world', 16, 32);
 }
 }); // end new Phaser.Game
 }); // end document.ready
