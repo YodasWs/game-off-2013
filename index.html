@@ -14,6 +14,7 @@
 <script src="www/res/bootstrap.min.js"></script>
 <script src="www/res/phaser.min.js"></script>
 <script src="www/js/world.js" async></script>
+<script src="www/js/units.js"></script>
 <script>
 $(document).ready(function() {
 // Global Variables
@@ -29,8 +30,11 @@ preload : function() {
 		game.load.image('tile.' + val, 'www/img/tiles/' + val + '.png');
 	});
 	// Load Overlay Images
-	$.each(['roman', 'britton', 'saxon'], function(i, val) {
-		game.load.image('city.' + val, 'www/img/overlays/city-' + val + '.png');
+	$.each(['roman', 'britton', 'saxon'], function(i, faction) {
+		game.load.image('city.' + faction, 'www/img/overlays/city-' + faction + '.png');
+		$.each(unitTypes, function(unit, stats) {
+			game.load.image('unit.' + faction + '.' + unit, 'www/img/' + faction + '/' + unit + '.png');
+		});
 	});
 	game.stage.backgroundColor = 'lightseagreen';
 },
@@ -45,17 +49,24 @@ create : function() {
 		var x = item.col * 74 + 20;
 		var y = item.row * 86 + (item.col % 2 ? 43 : 0);
 		$.extend(world[i], game.add.tileSprite(x, y, 200, 200, 'tile.' + item.terrain));
-		world[i].scale.x = scale.x;
-		world[i].scale.y = scale.y;
+		world[i].scale = scale;
 		game.add.text(x+30, y+50, world[i].col + '×' + world[i].row, {
 			font: '12pt Arial', fill: 'black', align: 'center'
 		});
 		// Add City Overlay
 		if (world[i].city) {
 			world[i].overlay = game.add.tileSprite(x, y, 200, 200, 'city.' + world[i].city);
-			world[i].overlay.scale.x = scale.x;
-			world[i].overlay.scale.y = scale.y;
+			world[i].overlay.scale = scale;
 		}
+	});
+
+	// Place Starting Units
+	$.each(units, function(i, unit) {
+		var x = unit.col * 74 + 20;
+		var y = unit.row * 86 + (unit.col % 2 ? 43 : 0);
+		$.extend(units[i], game.add.sprite(x, y, 'unit.' + unit.faction + '.' + unit.type));
+		units[i].anchor = {x:.5,y:.5};
+		units[i].scale = scale;
 	});
 },
 update : function() {
@@ -74,6 +85,7 @@ provinces in the east. Trade with the rest of the empire is becoming more and mo
 the empire in the name of one general or another. Barbarians from the north and across the seas are raiding the
 countryside.</p>
 <p>So, Welcome to Brython. Can you lead the people through these turbulent times?</p>
+<div id="keyboard"></div>
 </main>
 </body>
 </html>
