@@ -13,7 +13,7 @@
 -->
 <script src="www/res/bootstrap.min.js"></script>
 <script src="www/res/phaser.min.js"></script>
-<script src="www/js/world.js" async></script>
+<script src="www/js/world.js"></script>
 <script src="www/js/units.js"></script>
 <script>
 $(document).ready(function() {
@@ -67,11 +67,14 @@ create : function() {
 	$.each(units, function(i, unit) {
 		var x = unit.col * 74 + 20;
 		var y = unit.row * 86 + (unit.col % 2 ? 43 : 0);
-		$.extend(units[i], game.add.sprite(x, y, 'unit.' + unit.faction + '.' + unit.type));
+		$.extend(units[i], game.add.sprite(x, y, 'unit.' + unit.faction + '.' + unit.uType));
 		units[i].anchor = {x:.5,y:.5};
 		units[i].scale.x = scale.x;
 		units[i].scale.y = scale.y;
-if (unit.faction == 'britton') activeUnit = i;
+		if (unit.faction == 'britton') {
+			activeUnit = i;
+			units[i].setInteractive(true);
+		}
 	});
 game.input.keyboard.addKeyCapture([
 	Phaser.Keyboard.U,
@@ -84,38 +87,90 @@ game.input.keyboard.addKeyCapture([
 game.input.keyboard.addCallbacks(game, function(event) {
 	// On Key Down
 	if (!(activeUnit >= 0)) return false;
+units[activeUnit].body.velocity.x = 0;
+units[activeUnit].body.velocity.y = 0;
+var x = units[activeUnit].col * 74 + 20;
+var y = units[activeUnit].row * 86 + (units[activeUnit].col % 2 ? 43 : 0);
 	switch (event.keyCode) {
 	case Phaser.Keyboard.U:
-		if (units[activeUnit].col % 2)
-			units[activeUnit].row++;
+		if (units[activeUnit].col % 2 == 0)
+			units[activeUnit].row--;
 		units[activeUnit].col--;
 		break;
 	case Phaser.Keyboard.I:
-		units[activeUnit].row++;
+		units[activeUnit].row--;
 		break;
 	case Phaser.Keyboard.O:
+		if (units[activeUnit].col % 2 == 0)
+			units[activeUnit].row--;
 		units[activeUnit].col++;
 		break;
 	case Phaser.Keyboard.J:
+		if (units[activeUnit].col % 2 == 1)
+			units[activeUnit].row++;
 		units[activeUnit].col--;
 		break;
 	case Phaser.Keyboard.K:
-		units[activeUnit].row--;
+		units[activeUnit].row++;
 		break;
 	case Phaser.Keyboard.L:
+		if (units[activeUnit].col % 2 == 1)
+			units[activeUnit].row++;
 		units[activeUnit].col++;
 		break;
 	default:
 		return false;
 	}
-//console.log('moving to ' + units[activeUnit].col + 'x' + units[activeUnit].row);
-	units[activeUnit].x = units[activeUnit].col * 74 + 20;
-	units[activeUnit].y = units[activeUnit].row * 86 + (units[activeUnit].col % 2 ? 43 : 0);
+//for (i in units[activeUnit]) {
+//	if (typeof units[activeUnit][i] == 'function')
+//		console.log('units[activeUnit].' + i + '()');
+//	else
+//		console.log('units[activeUnit].' + i + ' = ' + units[activeUnit][i]);
+//}
+console.log('moving ' + units[activeUnit].uType + ' to ' + units[activeUnit].col + 'x' + units[activeUnit].row);
+units[activeUnit].body.x = x;
+units[activeUnit].body.y = y;
+var x = units[activeUnit].col * 74 + 20;
+var y = units[activeUnit].row * 86 + (units[activeUnit].col % 2 ? 43 : 0);
+//units[activeUnit].reset(x, y);
+//console.log(units[activeUnit].uType + ' at ' + units[activeUnit].x + ',' + units[activeUnit].y);
+units[activeUnit].body.velocity.x = 0;
+units[activeUnit].body.velocity.y = 0;
+game.physics.moveToXY(units[activeUnit], x, y);
 });
+//*/
 },
 update : function() {
+//*
+var pntEnd = {
+	x: units[activeUnit].col * 74 + 20,
+	y: units[activeUnit].row * 86 + (units[activeUnit].col % 2 ? 43 : 0)
+};
+//console.log(units[activeUnit].uType + ' at ' + units[activeUnit].x + ',' + units[activeUnit].y);
+if (Math.abs(units[activeUnit].body.x - pntEnd.x) <= 5 && Math.abs(units[activeUnit].body.y - pntEnd.y) <= 50) {
+units[activeUnit].body.velocity.x = 0;
+units[activeUnit].body.velocity.y = 0;
+units[activeUnit].body.x = pntEnd.x;
+units[activeUnit].body.y = pntEnd.y;
+} else {
+game.physics.moveToXY(units[activeUnit], pntEnd.x, pntEnd.y);
+}
+//*/
+//if(game.input.keyboard.isDown(Phaser.Keyboard.I)) {
+//console.log('I pressed');
+//	units[activeUnit].row--;
+//var	x = units[activeUnit].col * 74 + 20;
+//var	y = units[activeUnit].row * 86 + (units[activeUnit].col % 2 ? 43 : 0);
+//console.log(units[activeUnit].uType + ' at ' + units[activeUnit].x + ',' + units[activeUnit].y);
+//game.physics.moveToXY(units[activeUnit], x, y, 60);
+//}
+//	if (activeUnit >= 0 && units[activeUnit]) {
+//		units[activeUnit].x = units[activeUnit].col * 74 + 20;
+//		units[activeUnit].y = units[activeUnit].row * 86 + (units[activeUnit].col % 2 ? 43 : 0);
+//	}
 },
 render : function() {
+//game.debug.renderSpriteBody(units[activeUnit]);
 //game.debug.renderText('hello world', 16, 32);
 }
 }); // end new Phaser.Game

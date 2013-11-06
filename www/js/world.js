@@ -198,3 +198,9 @@
 	{terrain:'water', col:9, row:17},
 	{terrain:'water', col:10, row:17}
 ];
+// Save Board Dimensions
+var board = {cols:0, rows:0};
+$.each(world, function(i, tile) {
+	board.cols = Math.max(board.cols, tile.col+1);
+	board.rows = Math.max(board.rows, tile.row+1);
+});
