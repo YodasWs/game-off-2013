@@ -16,14 +16,15 @@
 <script src="www/js/world.js"></script>
 <script src="www/js/units.js"></script>
 <script>
-$(document).ready(function() {
 // Global Variables
-var width = Math.max(Math.min($(document).width() * .95, 900), 600);
+var width, game;
 var scale = { x:.5, y:.5 };
 var activeUnit = -1;
 
+$(document).ready(function() {
+width = Math.max(Math.min($(document).width() * .95, 900), 600);
 // Build Game
-var game = new Phaser.Game(width, Math.floor(width * 16 / 9), Phaser.AUTO, 'main', {
+game = new Phaser.Game(width, Math.floor(width * 16 / 9), Phaser.CANVAS, 'main', {
 preload : function() {
 //	game.load.image('background', 'www/img/terrain/grass.jpg'); // TODO: Get water/sea background
 	// Load Terrain Images
@@ -128,20 +129,23 @@ var y = units[activeUnit].row * 86 + (units[activeUnit].col % 2 ? 43 : 0);
 //		console.log('units[activeUnit].' + i + ' = ' + units[activeUnit][i]);
 //}
 console.log('moving ' + units[activeUnit].uType + ' to ' + units[activeUnit].col + 'x' + units[activeUnit].row);
-units[activeUnit].body.x = x;
-units[activeUnit].body.y = y;
-var x = units[activeUnit].col * 74 + 20;
-var y = units[activeUnit].row * 86 + (units[activeUnit].col % 2 ? 43 : 0);
+//units[activeUnit].body.x = x;
+//units[activeUnit].body.y = y;
+x = units[activeUnit].col * 74 + 20;
+y = units[activeUnit].row * 86 + (units[activeUnit].col % 2 ? 43 : 0);
 //units[activeUnit].reset(x, y);
 //console.log(units[activeUnit].uType + ' at ' + units[activeUnit].x + ',' + units[activeUnit].y);
+units[activeUnit].x = x;
+units[activeUnit].y = y;
 units[activeUnit].body.velocity.x = 0;
 units[activeUnit].body.velocity.y = 0;
+console.log('moving ' + units[activeUnit].uType + ' to ' + x + ',' + y);
 game.physics.moveToXY(units[activeUnit], x, y);
 });
 //*/
 },
 update : function() {
-//*
+/*
 var pntEnd = {
 	x: units[activeUnit].col * 74 + 20,
 	y: units[activeUnit].row * 86 + (units[activeUnit].col % 2 ? 43 : 0)
@@ -156,6 +160,7 @@ units[activeUnit].body.y = pntEnd.y;
 game.physics.moveToXY(units[activeUnit], pntEnd.x, pntEnd.y);
 }
 //*/
+stopUnits();
 //if(game.input.keyboard.isDown(Phaser.Keyboard.I)) {
 //console.log('I pressed');
 //	units[activeUnit].row--;
@@ -175,6 +180,38 @@ render : function() {
 }
 }); // end new Phaser.Game
 }); // end document.ready
+function moveUnit(unit, row, col) {
+	// Calculate tile point
+	var x = col * 74 + 20;
+	var y = row * 86 + (col % 2 ? 43 : 0);
+	// Clear unit movement
+	unit.body.velocity.x = 0;
+	unit.body.velocity.y = 0;
+	unit.body.x = unit.x;
+	unit.body.y = unit.y;
+	// Save target point
+	unit.x = x;
+	unit.y = y;
+	// Move unit
+	game.physics.moveToXY(unit, x, y);
+}
+function stopUnits() {
+	$.each(units, function(i, unit) {
+		// 'return true' == 'continue'
+		// 'return false' == 'break'
+		if (unit.body.velocity.x == 0 && unit.body.velocity.y == 0)
+			return true;
+//		unit.body.velocity.x = 0;
+//		unit.body.velocity.y = 0;
+console.log('moving ' + unit.uType + ' from ' + unit.body.x + ',' + unit.body.y + ' to ' + unit.x + ',' + unit.y);
+		if (Math.abs(unit.body.x - unit.x) <= 5 && Math.abs(unit.body.y - unit.y) <= 50) {
+			unit.body.x = unit.x;
+			unit.body.y = unit.y;
+			unit.body.velocity.x = 0;
+			unit.body.velocity.y = 0;
+		}// else game.physics.moveToXY(unit, unit.x, unit.y);
+	});
+}
 </script>
 </head>
 <body>
