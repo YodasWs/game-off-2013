@@ -77,21 +77,19 @@ create : function() {
 			units[i].setInteractive(true);
 		}
 	});
-game.input.keyboard.addKeyCapture([
-	Phaser.Keyboard.U,
-	Phaser.Keyboard.I,
-	Phaser.Keyboard.O,
-	Phaser.Keyboard.J,
-	Phaser.Keyboard.K,
-	Phaser.Keyboard.L
-]);
+	game.input.keyboard.addKeyCapture([
+		Phaser.Keyboard.U,
+		Phaser.Keyboard.I,
+		Phaser.Keyboard.O,
+		Phaser.Keyboard.J,
+		Phaser.Keyboard.K,
+		Phaser.Keyboard.L
+	]);
 game.input.keyboard.addCallbacks(game, function(event) {
 	// On Key Down
 	if (!(activeUnit >= 0)) return false;
-units[activeUnit].body.velocity.x = 0;
-units[activeUnit].body.velocity.y = 0;
-var x = units[activeUnit].col * 74 + 20;
-var y = units[activeUnit].row * 86 + (units[activeUnit].col % 2 ? 43 : 0);
+	units[activeUnit].body.velocity.x = 0;
+	units[activeUnit].body.velocity.y = 0;
 	switch (event.keyCode) {
 	case Phaser.Keyboard.U:
 		if (units[activeUnit].col % 2 == 0)
@@ -122,57 +120,30 @@ var y = units[activeUnit].row * 86 + (units[activeUnit].col % 2 ? 43 : 0);
 	default:
 		return false;
 	}
-//for (i in units[activeUnit]) {
-//	if (typeof units[activeUnit][i] == 'function')
-//		console.log('units[activeUnit].' + i + '()');
-//	else
-//		console.log('units[activeUnit].' + i + ' = ' + units[activeUnit][i]);
-//}
-console.log('moving ' + units[activeUnit].uType + ' to ' + units[activeUnit].col + 'x' + units[activeUnit].row);
-//units[activeUnit].body.x = x;
-//units[activeUnit].body.y = y;
-x = units[activeUnit].col * 74 + 20;
-y = units[activeUnit].row * 86 + (units[activeUnit].col % 2 ? 43 : 0);
-//units[activeUnit].reset(x, y);
-//console.log(units[activeUnit].uType + ' at ' + units[activeUnit].x + ',' + units[activeUnit].y);
-units[activeUnit].x = x;
-units[activeUnit].y = y;
-units[activeUnit].body.velocity.x = 0;
-units[activeUnit].body.velocity.y = 0;
-console.log('moving ' + units[activeUnit].uType + ' to ' + x + ',' + y);
-game.physics.moveToXY(units[activeUnit], x, y);
+	var x = units[activeUnit].col * 74 + 20;
+	var y = units[activeUnit].row * 86 + (units[activeUnit].col % 2 ? 43 : 0);
+	units[activeUnit].body.velocity.x = 0;
+	units[activeUnit].body.velocity.y = 0;
+	game.physics.moveToXY(units[activeUnit], x, y, null, 700);
 });
-//*/
 },
 update : function() {
-/*
-var pntEnd = {
-	x: units[activeUnit].col * 74 + 20,
-	y: units[activeUnit].row * 86 + (units[activeUnit].col % 2 ? 43 : 0)
-};
-//console.log(units[activeUnit].uType + ' at ' + units[activeUnit].x + ',' + units[activeUnit].y);
-if (Math.abs(units[activeUnit].body.x - pntEnd.x) <= 5 && Math.abs(units[activeUnit].body.y - pntEnd.y) <= 50) {
-units[activeUnit].body.velocity.x = 0;
-units[activeUnit].body.velocity.y = 0;
-units[activeUnit].body.x = pntEnd.x;
-units[activeUnit].body.y = pntEnd.y;
-} else {
-game.physics.moveToXY(units[activeUnit], pntEnd.x, pntEnd.y);
-}
-//*/
-stopUnits();
-//if(game.input.keyboard.isDown(Phaser.Keyboard.I)) {
-//console.log('I pressed');
-//	units[activeUnit].row--;
-//var	x = units[activeUnit].col * 74 + 20;
-//var	y = units[activeUnit].row * 86 + (units[activeUnit].col % 2 ? 43 : 0);
-//console.log(units[activeUnit].uType + ' at ' + units[activeUnit].x + ',' + units[activeUnit].y);
-//game.physics.moveToXY(units[activeUnit], x, y, 60);
-//}
-//	if (activeUnit >= 0 && units[activeUnit]) {
-//		units[activeUnit].x = units[activeUnit].col * 74 + 20;
-//		units[activeUnit].y = units[activeUnit].row * 86 + (units[activeUnit].col % 2 ? 43 : 0);
-//	}
+	$.each(units, function(i, unit) {
+		// 'return true' == 'continue'
+		// 'return false' == 'break'
+		if (unit.body.velocity.x == 0 && unit.body.velocity.y == 0)
+			return true;
+		var x = unit.col * 74 + 20;
+		var y = unit.row * 86 + (unit.col % 2 ? 43 : 0);
+		unit.body.velocity.x = 0;
+		unit.body.velocity.y = 0;
+		unit.x = unit.body.x;
+		unit.y = unit.body.y;
+		if (Math.abs(unit.body.x - x) <= 5 && Math.abs(unit.body.y - y) <= 5) {
+			unit.body.velocity.x = 0;
+			unit.body.velocity.y = 0;
+		} else game.physics.moveToXY(unit, x, y, null, 500);
+	});
 },
 render : function() {
 //game.debug.renderSpriteBody(units[activeUnit]);
@@ -180,38 +151,6 @@ render : function() {
 }
 }); // end new Phaser.Game
 }); // end document.ready
-function moveUnit(unit, row, col) {
-	// Calculate tile point
-	var x = col * 74 + 20;
-	var y = row * 86 + (col % 2 ? 43 : 0);
-	// Clear unit movement
-	unit.body.velocity.x = 0;
-	unit.body.velocity.y = 0;
-	unit.body.x = unit.x;
-	unit.body.y = unit.y;
-	// Save target point
-	unit.x = x;
-	unit.y = y;
-	// Move unit
-	game.physics.moveToXY(unit, x, y);
-}
-function stopUnits() {
-	$.each(units, function(i, unit) {
-		// 'return true' == 'continue'
-		// 'return false' == 'break'
-		if (unit.body.velocity.x == 0 && unit.body.velocity.y == 0)
-			return true;
-//		unit.body.velocity.x = 0;
-//		unit.body.velocity.y = 0;
-console.log('moving ' + unit.uType + ' from ' + unit.body.x + ',' + unit.body.y + ' to ' + unit.x + ',' + unit.y);
-		if (Math.abs(unit.body.x - unit.x) <= 5 && Math.abs(unit.body.y - unit.y) <= 50) {
-			unit.body.x = unit.x;
-			unit.body.y = unit.y;
-			unit.body.velocity.x = 0;
-			unit.body.velocity.y = 0;
-		}// else game.physics.moveToXY(unit, unit.x, unit.y);
-	});
-}
 </script>
 </head>
 <body>
