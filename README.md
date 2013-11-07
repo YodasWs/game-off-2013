@@ -12,14 +12,22 @@ So, Welcome to Brython. Can you lead the people through these turbulent times?
 
 ## Components
 
+### Frameworks
+
 * [Zepto](https://github.com/madrobby/zepto) ([Documentation](http://zeptojs.com))
 * [phaser](https://github.com/photonstorm/phaser)
-* [onScreen](https://github.com/silvestreh/onScreen)
-* [jquery.swipe-events.js](https://github.com/eikes/jquery.swipe-events.js)
-* [onepage-scroll](https://github.com/peachananr/onepage-scroll)
 * [Bootstrap](https://github.com/twbs/bootstrap) ([Documentation](http://getbootstrap.com))
 
 ### Terrain
 
 * [Terrain Texture Bonanza 1](http://poopgoblyn.deviantart.com/art/Terrain-Texture-Bonanza-1-114003795)
 * [Grass](http://seamlesstextures.deviantart.com/art/Grass-texture-seamless-393181884)
+
+### Potential
+* [OpenGameArt.org](http://opengameart.org/)
+* [PixelJoin](http://www.pixeljoint.com/)
+* [Bfxr](http://www.bfxr.net/)
+* [FreePD.com](http://freepd.com/)
+* [onScreen](https://github.com/silvestreh/onScreen)
+* [jquery.swipe-events.js](https://github.com/eikes/jquery.swipe-events.js)
+* [onepage-scroll](https://github.com/peachananr/onepage-scroll)

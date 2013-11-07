@@ -13,26 +13,32 @@
 -->
 <script src="www/res/bootstrap.min.js"></script>
 <script src="www/res/phaser.min.js"></script>
+<script src="www/js/world.js"></script>
+<script src="www/js/units.js"></script>
 <script>
-var world = [
-	{terrain:'grass',x:100,y:95},
-	{terrain:'grass',x:248,y:95},
-	{terrain:'grass',x:396,y:95},
-	{terrain:'grass',x:174,y:138},
-	{terrain:'grass',x:322,y:138},
-	{terrain:'grass',x:100,y:181},
-	{terrain:'grass',x:248,y:181},
-	{terrain:'grass',x:396,y:181},
-	{terrain:'grass',x:174,y:224},
-	{terrain:'grass',x:322,y:224}
-];
+// Global Variables
+var width, game;
+var scale = { x:.5, y:.5 };
+var activeUnit = -1;
+
 $(document).ready(function() {
-var width = Math.max(Math.min($(document).width() * .95, 900), 600);
-var game = new Phaser.Game(width, Math.floor(width * 9 / 16), Phaser.AUTO, 'main', {
+width = Math.max(Math.min($(document).width() * .95, 900), 600);
+// Build Game
+game = new Phaser.Game(width, Math.floor(width * 16 / 9), Phaser.CANVAS, 'main', {
 preload : function() {
-	game.load.image('background', 'www/img/terrain/grass.jpg'); // TODO: Get water/sea background
-	game.load.image('grass', 'www/img/tiles/grass.png');
-game.stage.backgroundColor = 'lightseagreen';
+//	game.load.image('background', 'www/img/terrain/grass.jpg'); // TODO: Get water/sea background
+	// Load Terrain Images
+	$.each(['grass', 'water'], function(i, val) {
+		game.load.image('tile.' + val, 'www/img/tiles/' + val + '.png');
+	});
+	// Load Overlay Images
+	$.each(['roman', 'britton', 'saxon'], function(i, faction) {
+		game.load.image('city.' + faction, 'www/img/overlays/city-' + faction + '.png');
+		$.each(unitTypes, function(unit, stats) {
+			game.load.image('unit.' + faction + '.' + unit, 'www/img/' + faction + '/' + unit + '.png');
+		});
+	});
+	game.stage.backgroundColor = 'lightseagreen';
 },
 create : function() {
 /*	// Add Background and Scale to Size
@@ -40,16 +46,151 @@ create : function() {
 	background.scale.y = game.height / background.height;
 	background.scale.x = game.width / background.width;
 //*/
+	// Build the Board
 	$.each(world, function(i, item) {
-		$.extend(world[i], game.add.tileSprite(item.x - 100, item.y - 100, 200, 200, item.terrain));
-		world[i].scale.x = .5;
-		world[i].scale.y = .5;
+		var x = item.col * 74 + 20;
+		var y = item.row * 86 + (item.col % 2 ? 43 : 0);
+		$.extend(world[i], game.add.tileSprite(x, y, 200, 200, 'tile.' + item.terrain));
+		world[i].scale.x = scale.x;
+		world[i].scale.y = scale.y;
+		game.add.text(x+30, y+50, world[i].col + '×' + world[i].row, {
+			font: '12pt Arial', fill: 'lightgrey', align: 'center'
+		});
+		// Add City Overlay
+		if (world[i].city) {
+			world[i].overlay = game.add.tileSprite(x, y, 200, 200, 'city.' + world[i].city);
+			world[i].overlay.scale.x = scale.x;
+			world[i].overlay.scale.y = scale.y;
+		}
 	});
+
+	// Place Starting Units
+	$.each(units, function(i, unit) {
+		var x = unit.col * 74 + 20;
+		var y = unit.row * 86 + (unit.col % 2 ? 43 : 0);
+		$.extend(units[i], game.add.sprite(x, y, 'unit.' + unit.faction + '.' + unit.uType));
+		// Set Default Values
+		units[i].anchor = {x:.5,y:.5};
+		units[i].scale.x = scale.x;
+		units[i].scale.y = scale.y;
+		units[i].autoCull = true;
+		if (unit.faction == 'britton') {
+			activeUnit = i;
+			units[i].setInteractive(true);
+		}
+		$.extend(units[i], unitTypes[unit.uType]);
+	});
+	game.input.keyboard.addKeyCapture([
+		Phaser.Keyboard.U,
+		Phaser.Keyboard.I,
+		Phaser.Keyboard.O,
+		Phaser.Keyboard.J,
+		Phaser.Keyboard.K,
+		Phaser.Keyboard.L
+	]);
+game.input.keyboard.addCallbacks(game, function(event) {
+	// On Key Down
+
+	// Move Active Unit
+	// TODO: Make this a closure, separate from rest of key press checks
+	if (activeUnit >= 0) {
+		if (!(units[activeUnit].moves > 0)) {
+			grabNextUnit();
+			return false;
+		}
+
+		var col = units[activeUnit].col;
+		var row = units[activeUnit].row;
+		switch (event.keyCode) {
+		case Phaser.Keyboard.U:
+			if (col % 2 == 0) row--;
+			col--;
+			break;
+		case Phaser.Keyboard.I:
+			row--;
+			break;
+		case Phaser.Keyboard.O:
+			if (col % 2 == 0) row--;
+			col++;
+			break;
+		case Phaser.Keyboard.J:
+			if (col % 2 == 1) row++;
+			col--;
+			break;
+		case Phaser.Keyboard.K:
+			row++;
+			break;
+		case Phaser.Keyboard.L:
+			if (col % 2 == 1) row++;
+			col++;
+			break;
+		default:
+			return false;
+		}
+		if (!isLegalMove(units[activeUnit], row, col)) return false;
+
+		// Now Move Unit
+		units[activeUnit].moves--;
+		units[activeUnit].col = col;
+		units[activeUnit].row = row;
+		var x = units[activeUnit].col * 74 + 20;
+		var y = units[activeUnit].row * 86 + (units[activeUnit].col % 2 ? 43 : 0);
+		units[activeUnit].body.velocity.x = 0;
+		units[activeUnit].body.velocity.y = 0;
+		game.physics.moveToXY(units[activeUnit], x, y, null, 700);
+	} // end activeUnit
+});
 },
 update : function() {
+	$.each(units, function(i, unit) {
+		// 'return true' == 'continue'
+		// 'return false' == 'break'
+		if (unit.body.velocity.x == 0 && unit.body.velocity.y == 0)
+			return true;
+		var x = unit.col * 74 + 20;
+		var y = unit.row * 86 + (unit.col % 2 ? 43 : 0);
+		unit.body.velocity.x = 0;
+		unit.body.velocity.y = 0;
+		unit.x = unit.body.x;
+		unit.y = unit.body.y;
+		if (Math.abs(unit.body.x - x) <= 5 && Math.abs(unit.body.y - y) <= 5) {
+			unit.body.velocity.x = 0;
+			unit.body.velocity.y = 0;
+		} else game.physics.moveToXY(unit, x, y, null, 500);
+	});
+},
+render : function() {
+//game.debug.renderSpriteBody(units[activeUnit]);
+//game.debug.renderText('hello world', 16, 32);
 }
 }); // end new Phaser.Game
 }); // end document.ready
+
+function isLegalMove(unit, row, col) {
+	// Check Board Bounds
+	if (row < 0 || col < 0) return false;
+	if (row >= board.rows || col >= board.cols) return false;
+
+	// Grab Target Tile
+	var target;
+	$.each(world, function(i, tile) {
+		if (tile.row == row && tile.col == col) {
+			target = tile;
+			return false;
+		}
+	});
+	switch (target.terrain) {
+	case 'water':
+		return false;
+	case 'grass':
+		return true;
+	default:
+		return false;
+	}
+}
+function grabNextUnit() {
+	activeUnit = -1;
+}
 </script>
 </head>
 <body>
@@ -62,6 +203,7 @@ provinces in the east. Trade with the rest of the empire is becoming more and mo
 the empire in the name of one general or another. Barbarians from the north and across the seas are raiding the
 countryside.</p>
 <p>So, Welcome to Brython. Can you lead the people through these turbulent times?</p>
+<div id="keyboard"></div>
 </main>
 </body>
 </html>
