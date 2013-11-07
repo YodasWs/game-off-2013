@@ -68,7 +68,7 @@ create : function() {
 	$.each(units, function(i, unit) {
 		var x = unit.col * 74 + 20;
 		var y = unit.row * 86 + (unit.col % 2 ? 43 : 0);
-		$.extend(units[i], game.add.sprite(x, y, 'unit.' + unit.faction + '.' + unit.uType, unitTypes[unit.uType]));
+		$.extend(units[i], game.add.sprite(x, y, 'unit.' + unit.faction + '.' + unit.uType));
 		// Set Default Values
 		units[i].anchor = {x:.5,y:.5};
 		units[i].scale.x = scale.x;
@@ -78,6 +78,7 @@ create : function() {
 			activeUnit = i;
 			units[i].setInteractive(true);
 		}
+		$.extend(units[i], unitTypes[unit.uType]);
 	});
 	game.input.keyboard.addKeyCapture([
 		Phaser.Keyboard.U,
@@ -91,7 +92,12 @@ game.input.keyboard.addCallbacks(game, function(event) {
 	// On Key Down
 
 	// Move Active Unit
+	// TODO: Make this a closure, separate from rest of key press checks
 	if (activeUnit >= 0) {
+		if (!(units[activeUnit].moves > 0)) {
+			grabNextUnit();
+			return false;
+		}
 
 		var col = units[activeUnit].col;
 		var row = units[activeUnit].row;
@@ -121,10 +127,10 @@ game.input.keyboard.addCallbacks(game, function(event) {
 		default:
 			return false;
 		}
-//console.log('making legal move ? ' + isLegalMove(units[activeUnit], row, col));
 		if (!isLegalMove(units[activeUnit], row, col)) return false;
 
 		// Now Move Unit
+		units[activeUnit].moves--;
 		units[activeUnit].col = col;
 		units[activeUnit].row = row;
 		var x = units[activeUnit].col * 74 + 20;
@@ -161,7 +167,6 @@ render : function() {
 }); // end document.ready
 
 function isLegalMove(unit, row, col) {
-console.log('checking move to ' + col + 'x' + row);
 	// Check Board Bounds
 	if (row < 0 || col < 0) return false;
 	if (row >= board.rows || col >= board.cols) return false;
@@ -174,7 +179,6 @@ console.log('checking move to ' + col + 'x' + row);
 			return false;
 		}
 	});
-console.log('target tile is ' + target.terrain);
 	switch (target.terrain) {
 	case 'water':
 		return false;
@@ -183,6 +187,9 @@ console.log('target tile is ' + target.terrain);
 	default:
 		return false;
 	}
+}
+function grabNextUnit() {
+	activeUnit = -1;
 }
 </script>
 </head>

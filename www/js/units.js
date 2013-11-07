@@ -4,7 +4,7 @@
 	{faction:'britton', uType:'soldier', col:2, row:13}
 ];
 var unitTypes = {
-	soldier:{}
+	soldier:{ health:2, moves:2 }
 //	farmer:{},
 //	worker:{}
 };
