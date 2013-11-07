@@ -68,10 +68,12 @@ create : function() {
 	$.each(units, function(i, unit) {
 		var x = unit.col * 74 + 20;
 		var y = unit.row * 86 + (unit.col % 2 ? 43 : 0);
-		$.extend(units[i], game.add.sprite(x, y, 'unit.' + unit.faction + '.' + unit.uType));
+		$.extend(units[i], game.add.sprite(x, y, 'unit.' + unit.faction + '.' + unit.uType, unitTypes[unit.uType]));
+		// Set Default Values
 		units[i].anchor = {x:.5,y:.5};
 		units[i].scale.x = scale.x;
 		units[i].scale.y = scale.y;
+		units[i].autoCull = true;
 		if (unit.faction == 'britton') {
 			activeUnit = i;
 			units[i].setInteractive(true);
@@ -87,44 +89,50 @@ create : function() {
 	]);
 game.input.keyboard.addCallbacks(game, function(event) {
 	// On Key Down
-	if (!(activeUnit >= 0)) return false;
-	units[activeUnit].body.velocity.x = 0;
-	units[activeUnit].body.velocity.y = 0;
-	switch (event.keyCode) {
-	case Phaser.Keyboard.U:
-		if (units[activeUnit].col % 2 == 0)
-			units[activeUnit].row--;
-		units[activeUnit].col--;
-		break;
-	case Phaser.Keyboard.I:
-		units[activeUnit].row--;
-		break;
-	case Phaser.Keyboard.O:
-		if (units[activeUnit].col % 2 == 0)
-			units[activeUnit].row--;
-		units[activeUnit].col++;
-		break;
-	case Phaser.Keyboard.J:
-		if (units[activeUnit].col % 2 == 1)
-			units[activeUnit].row++;
-		units[activeUnit].col--;
-		break;
-	case Phaser.Keyboard.K:
-		units[activeUnit].row++;
-		break;
-	case Phaser.Keyboard.L:
-		if (units[activeUnit].col % 2 == 1)
-			units[activeUnit].row++;
-		units[activeUnit].col++;
-		break;
-	default:
-		return false;
-	}
-	var x = units[activeUnit].col * 74 + 20;
-	var y = units[activeUnit].row * 86 + (units[activeUnit].col % 2 ? 43 : 0);
-	units[activeUnit].body.velocity.x = 0;
-	units[activeUnit].body.velocity.y = 0;
-	game.physics.moveToXY(units[activeUnit], x, y, null, 700);
+
+	// Move Active Unit
+	if (activeUnit >= 0) {
+
+		var col = units[activeUnit].col;
+		var row = units[activeUnit].row;
+		switch (event.keyCode) {
+		case Phaser.Keyboard.U:
+			if (col % 2 == 0) row--;
+			col--;
+			break;
+		case Phaser.Keyboard.I:
+			row--;
+			break;
+		case Phaser.Keyboard.O:
+			if (col % 2 == 0) row--;
+			col++;
+			break;
+		case Phaser.Keyboard.J:
+			if (col % 2 == 1) row++;
+			col--;
+			break;
+		case Phaser.Keyboard.K:
+			row++;
+			break;
+		case Phaser.Keyboard.L:
+			if (col % 2 == 1) row++;
+			col++;
+			break;
+		default:
+			return false;
+		}
+//console.log('making legal move ? ' + isLegalMove(units[activeUnit], row, col));
+		if (!isLegalMove(units[activeUnit], row, col)) return false;
+
+		// Now Move Unit
+		units[activeUnit].col = col;
+		units[activeUnit].row = row;
+		var x = units[activeUnit].col * 74 + 20;
+		var y = units[activeUnit].row * 86 + (units[activeUnit].col % 2 ? 43 : 0);
+		units[activeUnit].body.velocity.x = 0;
+		units[activeUnit].body.velocity.y = 0;
+		game.physics.moveToXY(units[activeUnit], x, y, null, 700);
+	} // end activeUnit
 });
 },
 update : function() {
@@ -151,6 +159,31 @@ render : function() {
 }
 }); // end new Phaser.Game
 }); // end document.ready
+
+function isLegalMove(unit, row, col) {
+console.log('checking move to ' + col + 'x' + row);
+	// Check Board Bounds
+	if (row < 0 || col < 0) return false;
+	if (row >= board.rows || col >= board.cols) return false;
+
+	// Grab Target Tile
+	var target;
+	$.each(world, function(i, tile) {
+		if (tile.row == row && tile.col == col) {
+			target = tile;
+			return false;
+		}
+	});
+console.log('target tile is ' + target.terrain);
+	switch (target.terrain) {
+	case 'water':
+		return false;
+	case 'grass':
+		return true;
+	default:
+		return false;
+	}
+}
 </script>
 </head>
 <body>
