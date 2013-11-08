@@ -19,7 +19,7 @@
 // Global Variables
 var width, game;
 var scale = { x:.5, y:.5 };
-var activeUnit = -1;
+var activeUnit = {index:-1};
 
 $(document).ready(function() {
 width = Math.max(Math.min($(document).width() * .95, 900), 600);
@@ -27,6 +27,7 @@ width = Math.max(Math.min($(document).width() * .95, 900), 600);
 game = new Phaser.Game(width, Math.floor(width * 16 / 9), Phaser.CANVAS, 'main', {
 preload : function() {
 //	game.load.image('background', 'www/img/terrain/grass.jpg'); // TODO: Get water/sea background
+	game.load.image('activeUnit', 'www/img/activeUnit.png');
 	// Load Terrain Images
 	$.each(['grass', 'water'], function(i, val) {
 		game.load.image('tile.' + val, 'www/img/tiles/' + val + '.png');
@@ -75,11 +76,19 @@ create : function() {
 		units[i].scale.y = scale.y;
 		units[i].autoCull = true;
 		if (unit.faction == 'britton') {
-			activeUnit = i;
+			activeUnit.index = i;
 			units[i].setInteractive(true);
 		}
 		$.extend(units[i], unitTypes[unit.uType]);
 	});
+
+	// Active Unit Overlay
+	$.extend(activeUnit, game.add.sprite(units[activeUnit.index].x, units[activeUnit.index].y, 'activeUnit'));
+	activeUnit.anchor = {x:.5,y:.5};
+	activeUnit.scale.x = scale.x;
+	activeUnit.scale.y = scale.y;
+
+	// Game Key Inputs
 	game.input.keyboard.addKeyCapture([
 		Phaser.Keyboard.U,
 		Phaser.Keyboard.I,
@@ -93,14 +102,11 @@ game.input.keyboard.addCallbacks(game, function(event) {
 
 	// Move Active Unit
 	// TODO: Make this a closure, separate from rest of key press checks
-	if (activeUnit >= 0) {
-		if (!(units[activeUnit].moves > 0)) {
-			grabNextUnit();
-			return false;
-		}
+	if (activeUnit.index >= 0) {
+		if (!(units[activeUnit.index].moves > 0)) return false;
 
-		var col = units[activeUnit].col;
-		var row = units[activeUnit].row;
+		var col = units[activeUnit.index].col;
+		var row = units[activeUnit.index].row;
 		switch (event.keyCode) {
 		case Phaser.Keyboard.U:
 			if (col % 2 == 0) row--;
@@ -127,17 +133,17 @@ game.input.keyboard.addCallbacks(game, function(event) {
 		default:
 			return false;
 		}
-		if (!isLegalMove(units[activeUnit], row, col)) return false;
+		if (!isLegalMove(units[activeUnit.index], row, col)) return false;
 
 		// Now Move Unit
-		units[activeUnit].moves--;
-		units[activeUnit].col = col;
-		units[activeUnit].row = row;
-		var x = units[activeUnit].col * 74 + 20;
-		var y = units[activeUnit].row * 86 + (units[activeUnit].col % 2 ? 43 : 0);
-		units[activeUnit].body.velocity.x = 0;
-		units[activeUnit].body.velocity.y = 0;
-		game.physics.moveToXY(units[activeUnit], x, y, null, 700);
+		units[activeUnit.index].moves--;
+		units[activeUnit.index].col = col;
+		units[activeUnit.index].row = row;
+		var x = units[activeUnit.index].col * 74 + 20;
+		var y = units[activeUnit.index].row * 86 + (units[activeUnit.index].col % 2 ? 43 : 0);
+		units[activeUnit.index].body.velocity.x = 0;
+		units[activeUnit.index].body.velocity.y = 0;
+		game.physics.moveToXY(units[activeUnit.index], x, y, null, 700);
 	} // end activeUnit
 });
 },
@@ -156,11 +162,16 @@ update : function() {
 		if (Math.abs(unit.body.x - x) <= 5 && Math.abs(unit.body.y - y) <= 5) {
 			unit.body.velocity.x = 0;
 			unit.body.velocity.y = 0;
+			if (i == activeUnit.index && !(unit.moves > 0)) grabNextUnit();
 		} else game.physics.moveToXY(unit, x, y, null, 500);
 	});
+	if (activeUnit.index > -1) {
+		activeUnit.body.x = units[activeUnit.index].body.x;
+		activeUnit.body.y = units[activeUnit.index].body.y;
+	}
 },
 render : function() {
-//game.debug.renderSpriteBody(units[activeUnit]);
+//game.debug.renderSpriteBody(units[activeUnit.index]);
 //game.debug.renderText('hello world', 16, 32);
 }
 }); // end new Phaser.Game
@@ -189,7 +200,9 @@ function isLegalMove(unit, row, col) {
 	}
 }
 function grabNextUnit() {
-	activeUnit = -1;
+	activeUnit.visible = false;
+	activeUnit.index = -1;
+	activeUnit.kill();
 }
 </script>
 </head>
