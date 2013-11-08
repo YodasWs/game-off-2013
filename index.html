@@ -95,56 +95,72 @@ create : function() {
 		Phaser.Keyboard.O,
 		Phaser.Keyboard.J,
 		Phaser.Keyboard.K,
-		Phaser.Keyboard.L
+		Phaser.Keyboard.L,
+		Phaser.Keyboard.W,
+		Phaser.Keyboard.SPACEBAR
 	]);
 game.input.keyboard.addCallbacks(game, function(event) {
 	// On Key Down
 
-	// Move Active Unit
-	// TODO: Make this a closure, separate from rest of key press checks
-	if (activeUnit.index >= 0) {
-		if (!(units[activeUnit.index].moves > 0)) return false;
+	// Act on Active Unit
+	if (activeUnit.index >= 0 && units[activeUnit.index].moves > 0)
+	(function(event) {
 
 		var col = units[activeUnit.index].col;
 		var row = units[activeUnit.index].row;
 		switch (event.keyCode) {
 		case Phaser.Keyboard.U:
+			// Move up and left
 			if (col % 2 == 0) row--;
 			col--;
 			break;
 		case Phaser.Keyboard.I:
+			// Move up
 			row--;
 			break;
 		case Phaser.Keyboard.O:
+			// Move up and right
 			if (col % 2 == 0) row--;
 			col++;
 			break;
 		case Phaser.Keyboard.J:
+			// Move down and left
 			if (col % 2 == 1) row++;
 			col--;
 			break;
 		case Phaser.Keyboard.K:
+			// Move down
 			row++;
 			break;
 		case Phaser.Keyboard.L:
+			// Move down and right
 			if (col % 2 == 1) row++;
 			col++;
 			break;
+		case Phaser.Keyboard.SPACEBAR:
+			// Stay
+			units[activeUnit.index].action = 'stay';
+		case Phaser.Keyboard.W:
+			// Wait
+			grabNextUnit();
+			return true;
 		default:
 			return false;
 		}
-		if (!isLegalMove(units[activeUnit.index], row, col)) return false;
 
 		// Now Move Unit
-		units[activeUnit.index].moves--;
-		units[activeUnit.index].col = col;
-		units[activeUnit.index].row = row;
-		var x = units[activeUnit.index].col * 74 + 20;
-		var y = units[activeUnit.index].row * 86 + (units[activeUnit.index].col % 2 ? 43 : 0);
-		units[activeUnit.index].body.velocity.x = 0;
-		units[activeUnit.index].body.velocity.y = 0;
-		game.physics.moveToXY(units[activeUnit.index], x, y, null, 700);
-	} // end activeUnit
+		if (units[activeUnit.index].col != col || units[activeUnit.index].row != row) {
+			if (!isLegalMove(units[activeUnit.index], row, col)) return false;
+			units[activeUnit.index].moves--;
+			units[activeUnit.index].col = col;
+			units[activeUnit.index].row = row;
+			var x = units[activeUnit.index].col * 74 + 20;
+			var y = units[activeUnit.index].row * 86 + (units[activeUnit.index].col % 2 ? 43 : 0);
+			units[activeUnit.index].body.velocity.x = 0;
+			units[activeUnit.index].body.velocity.y = 0;
+			game.physics.moveToXY(units[activeUnit.index], x, y, null, 700);
+		}
+	})(event); // end activeUnit
 });
 },
 update : function() {
@@ -159,7 +175,7 @@ update : function() {
 		unit.body.velocity.y = 0;
 		unit.x = unit.body.x;
 		unit.y = unit.body.y;
-		if (Math.abs(unit.body.x - x) <= 5 && Math.abs(unit.body.y - y) <= 5) {
+		if (Math.abs(unit.body.x - x) <= 1 && Math.abs(unit.body.y - y) <= 1) {
 			unit.body.velocity.x = 0;
 			unit.body.velocity.y = 0;
 			if (i == activeUnit.index && !(unit.moves > 0)) grabNextUnit();
@@ -200,9 +216,35 @@ function isLegalMove(unit, row, col) {
 	}
 }
 function grabNextUnit() {
-	activeUnit.visible = false;
-	activeUnit.index = -1;
-	activeUnit.kill();
+	var lastUnit = -1, nextUnit = -1;
+	$.each(units, function(i, unit) {
+		if (unit.faction == 'britton' && unit.moves > 0 && unit.action != 'stay') {
+			nextUnit = i;
+			if (lastUnit == -1) lastUnit = i;
+			if (nextUnit > activeUnit.index)
+				return false; // return false == 'break'
+			if (nextUnit == activeUnit.index)
+				nextUnit = lastUnit;
+		}
+	});
+
+	// Set Active Unit
+	if (nextUnit > -1) {
+		activeUnit.index = nextUnit;
+		activeUnit.reset(units[nextUnit].x, units[nextUnit].y);
+	}
+
+	// No Units to Grab
+	if (nextUnit == -1) {
+		activeUnit.index = -1;
+		activeUnit.kill();
+		activeUnit.reset(-100, -100);
+		activeUnit.body.x = -100;
+		activeUnit.body.y = -100;
+		endTurn();
+	}
+}
+function endTurn() {
 }
 </script>
 </head>
