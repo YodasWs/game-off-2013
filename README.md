@@ -25,7 +25,7 @@ So, Welcome to Brython. Can you lead the people through these turbulent times?
 
 ### Potential
 * [OpenGameArt.org](http://opengameart.org/)
-* [PixelJoin](http://www.pixeljoint.com/)
+* [PixelJoint](http://www.pixeljoint.com/)
 * [Bfxr](http://www.bfxr.net/)
 * [FreePD.com](http://freepd.com/)
 * [onScreen](https://github.com/silvestreh/onScreen)
