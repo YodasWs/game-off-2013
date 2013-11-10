@@ -24,10 +24,17 @@ So, Welcome to Brython. Can you lead the people through these turbulent times?
 * [Grass](http://seamlesstextures.deviantart.com/art/Grass-texture-seamless-393181884)
 
 ### Potential
-* [OpenGameArt.org](http://opengameart.org/)
-* [PixelJoint](http://www.pixeljoint.com/)
-* [Bfxr](http://www.bfxr.net/)
-* [FreePD.com](http://freepd.com/)
-* [onScreen](https://github.com/silvestreh/onScreen)
-* [jquery.swipe-events.js](https://github.com/eikes/jquery.swipe-events.js)
-* [onepage-scroll](https://github.com/peachananr/onepage-scroll)
+* Art
+  * [OpenGameArt.org](http://opengameart.org/)
+  * [PixelJoint](http://www.pixeljoint.com/)
+  * [Bfxr](http://www.bfxr.net/)
+  * [FreePD.com](http://freepd.com/)
+* JavaScript
+  * [onScreen](https://github.com/silvestreh/onScreen)
+  * [jquery.swipe-events.js](https://github.com/eikes/jquery.swipe-events.js)
+  * [onepage-scroll](https://github.com/peachananr/onepage-scroll)
+* Icons
+  * [Vector UI Bundle](http://dribbble.com/shots/400160-Vector-UI-Bundle)
+  * [Modern UI Icons](http://designerfirst.com/icon-sets/modern-ui-icons/)
+  * [Segoe UI Icons Guide](http://msdn.microsoft.com/en-us/library/windows/apps/jj841126.aspx)
+  * [Subway Icon Set](http://subway.pixle.pl/) (Non-commercial use only)
