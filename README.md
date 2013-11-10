@@ -18,13 +18,14 @@ So, Welcome to Brython. Can you lead the people through these turbulent times?
 * [phaser](https://github.com/photonstorm/phaser)
 * [Bootstrap](https://github.com/twbs/bootstrap) ([Documentation](http://getbootstrap.com))
 
-### Terrain
+### Art
 
-* [Terrain Texture Bonanza 1](http://poopgoblyn.deviantart.com/art/Terrain-Texture-Bonanza-1-114003795)
+* [Icons8](http://icons8.com/download-huge-windows8-set/)
 * [Grass](http://seamlesstextures.deviantart.com/art/Grass-texture-seamless-393181884)
 
 ### Potential
 * Art
+  * [Terrain Texture Bonanza 1](http://poopgoblyn.deviantart.com/art/Terrain-Texture-Bonanza-1-114003795)
   * [OpenGameArt.org](http://opengameart.org/)
   * [PixelJoint](http://www.pixeljoint.com/)
   * [Bfxr](http://www.bfxr.net/)
