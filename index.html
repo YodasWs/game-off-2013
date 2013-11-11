@@ -19,7 +19,7 @@
 // Global Variables
 var width, game;
 var scale = { x:.5, y:.5 };
-var activeUnit = -1;
+var activeUnit = {index:-1};
 
 $(document).ready(function() {
 width = Math.max(Math.min($(document).width() * .95, 900), 600);
@@ -27,10 +27,13 @@ width = Math.max(Math.min($(document).width() * .95, 900), 600);
 game = new Phaser.Game(width, Math.floor(width * 16 / 9), Phaser.CANVAS, 'main', {
 preload : function() {
 //	game.load.image('background', 'www/img/terrain/grass.jpg'); // TODO: Get water/sea background
+	game.stage.backgroundColor = 'lightseagreen';
+
 	// Load Terrain Images
 	$.each(['grass', 'water'], function(i, val) {
 		game.load.image('tile.' + val, 'www/img/tiles/' + val + '.png');
 	});
+
 	// Load Overlay Images
 	$.each(['roman', 'britton', 'saxon'], function(i, faction) {
 		game.load.image('city.' + faction, 'www/img/overlays/city-' + faction + '.png');
@@ -38,7 +41,12 @@ preload : function() {
 			game.load.image('unit.' + faction + '.' + unit, 'www/img/' + faction + '/' + unit + '.png');
 		});
 	});
-	game.stage.backgroundColor = 'lightseagreen';
+
+	// Load Action Images
+	game.load.image('activeUnit', 'www/img/activeUnit.png');
+	$.each(actionSprites, function(action, sprite) {
+		game.load.image(action, sprite.src);
+	});
 },
 create : function() {
 /*	// Add Background and Scale to Size
@@ -64,6 +72,12 @@ create : function() {
 		}
 	});
 
+	// Active Unit Overlay
+	$.extend(activeUnit, game.add.sprite(-300, -300, 'activeUnit'));
+	activeUnit.anchor = {x:.5,y:.5};
+	activeUnit.scale.x = scale.x;
+	activeUnit.scale.y = scale.y;
+
 	// Place Starting Units
 	$.each(units, function(i, unit) {
 		var x = unit.col * 74 + 20;
@@ -74,93 +88,129 @@ create : function() {
 		units[i].scale.x = scale.x;
 		units[i].scale.y = scale.y;
 		units[i].autoCull = true;
-		if (unit.faction == 'britton') {
-			activeUnit = i;
-			units[i].setInteractive(true);
-		}
 		$.extend(units[i], unitTypes[unit.uType]);
 	});
+
+	// Add Action Sprites
+	$.each(actionSprites, function(i, sprite) {
+		$.extend(actionSprites[i], game.add.sprite(-200, -200, i));
+		game.input.keyboard.addKeyCapture(sprite.key);
+		actionSprites[i].scale.x = scale.x;
+		actionSprites[i].scale.y = scale.y;
+		actionSprites[i].anchor = {x:.5,y:.5};
+	});
+
+	// Game Key Inputs
 	game.input.keyboard.addKeyCapture([
-		Phaser.Keyboard.U,
-		Phaser.Keyboard.I,
-		Phaser.Keyboard.O,
-		Phaser.Keyboard.J,
-		Phaser.Keyboard.K,
-		Phaser.Keyboard.L
+		Phaser.Keyboard.SPACEBAR,
+		Phaser.Keyboard.W
 	]);
 game.input.keyboard.addCallbacks(game, function(event) {
 	// On Key Down
 
-	// Move Active Unit
-	// TODO: Make this a closure, separate from rest of key press checks
-	if (activeUnit >= 0) {
-		if (!(units[activeUnit].moves > 0)) {
-			grabNextUnit();
-			return false;
-		}
+	// Act on Active Unit
+	if (activeUnit.index >= 0 && units[activeUnit.index].moves > 0)
+	(function(event) {
 
-		var col = units[activeUnit].col;
-		var row = units[activeUnit].row;
+		var col = units[activeUnit.index].col;
+		var row = units[activeUnit.index].row;
 		switch (event.keyCode) {
 		case Phaser.Keyboard.U:
+			// Move up and left
 			if (col % 2 == 0) row--;
 			col--;
 			break;
 		case Phaser.Keyboard.I:
+			// Move up
 			row--;
 			break;
 		case Phaser.Keyboard.O:
+			// Move up and right
 			if (col % 2 == 0) row--;
 			col++;
 			break;
 		case Phaser.Keyboard.J:
+			// Move down and left
 			if (col % 2 == 1) row++;
 			col--;
 			break;
 		case Phaser.Keyboard.K:
+			// Move down
 			row++;
 			break;
 		case Phaser.Keyboard.L:
+			// Move down and right
 			if (col % 2 == 1) row++;
 			col++;
 			break;
+		case Phaser.Keyboard.SPACEBAR:
+			// Stay
+			units[activeUnit.index].action = 'stay';
+		case Phaser.Keyboard.W:
+			// Wait
+			grabNextUnit();
+			return true;
 		default:
 			return false;
 		}
-		if (!isLegalMove(units[activeUnit], row, col)) return false;
 
 		// Now Move Unit
-		units[activeUnit].moves--;
-		units[activeUnit].col = col;
-		units[activeUnit].row = row;
-		var x = units[activeUnit].col * 74 + 20;
-		var y = units[activeUnit].row * 86 + (units[activeUnit].col % 2 ? 43 : 0);
-		units[activeUnit].body.velocity.x = 0;
-		units[activeUnit].body.velocity.y = 0;
-		game.physics.moveToXY(units[activeUnit], x, y, null, 700);
-	} // end activeUnit
+		if (units[activeUnit.index].col != col || units[activeUnit.index].row != row) {
+			if (!isLegalMove(units[activeUnit.index], row, col)) return false;
+			$.each(actionSprites, function(i, sprite) {
+				actionSprites[i].reset(-300, -300);
+			});
+			hideActions();
+			units[activeUnit.index].moves--;
+			units[activeUnit.index].col = col;
+			units[activeUnit.index].row = row;
+			var x = units[activeUnit.index].col * 74 + 20;
+			var y = units[activeUnit.index].row * 86 + (units[activeUnit.index].col % 2 ? 43 : 0);
+			units[activeUnit.index].body.velocity.x = 0;
+			units[activeUnit.index].body.velocity.y = 0;
+			game.physics.moveToXY(units[activeUnit.index], x, y, null, 700);
+		}
+	})(event); // end activeUnit
 });
+
+	// Start the Game
+	grabNextUnit();
 },
 update : function() {
 	$.each(units, function(i, unit) {
 		// 'return true' == 'continue'
 		// 'return false' == 'break'
+
+		// Not Moving, continue
 		if (unit.body.velocity.x == 0 && unit.body.velocity.y == 0)
 			return true;
+
+		// Continue Movement to Desired Hex
 		var x = unit.col * 74 + 20;
 		var y = unit.row * 86 + (unit.col % 2 ? 43 : 0);
 		unit.body.velocity.x = 0;
 		unit.body.velocity.y = 0;
 		unit.x = unit.body.x;
 		unit.y = unit.body.y;
-		if (Math.abs(unit.body.x - x) <= 5 && Math.abs(unit.body.y - y) <= 5) {
+		hideActions();
+		if (Math.abs(unit.body.x - x) <= 1 && Math.abs(unit.body.y - y) <= 1) {
+			// We Arrived, Stop
 			unit.body.velocity.x = 0;
 			unit.body.velocity.y = 0;
+
+			// Grab next Unit
+			if (i == activeUnit.index && !(unit.moves > 0)) grabNextUnit();
+			else showActions();
+
 		} else game.physics.moveToXY(unit, x, y, null, 500);
 	});
+	if (activeUnit.index > -1) {
+		activeUnit.body.x = units[activeUnit.index].body.x;
+		activeUnit.body.y = units[activeUnit.index].body.y;
+	}
 },
 render : function() {
-//game.debug.renderSpriteBody(units[activeUnit]);
+//game.debug.renderSpriteBody(units[activeUnit.index]);
 //game.debug.renderText('hello world', 16, 32);
 }
 }); // end new Phaser.Game
@@ -189,7 +239,69 @@ function isLegalMove(unit, row, col) {
 	}
 }
 function grabNextUnit() {
-	activeUnit = -1;
+	var lastUnit = -1, nextUnit = -1;
+	$.each(units, function(i, unit) {
+		if (unit.faction == 'britton' && unit.moves > 0 && unit.action != 'stay') {
+			nextUnit = i;
+			if (lastUnit == -1) lastUnit = i;
+			if (nextUnit > activeUnit.index)
+				return false; // return false == 'break'
+			if (nextUnit == activeUnit.index)
+				nextUnit = lastUnit;
+		}
+	});
+
+	// No Units to Grab
+	if (!(nextUnit > -1)) return endTurn();
+
+	// Set Active Unit
+	activeUnit.index = nextUnit;
+	showActions();
+}
+function endTurn() {
+	activeUnit.index = -1;
+	hideActions();
+}
+function showActions() {
+	if (!(activeUnit.index >= 0 && units[activeUnit.index].moves > 0)) return false;
+
+	// Show Action Sprites
+	$.each(actionSprites, function(i, sprite) {
+		var x = -300, y = -300, row = units[activeUnit.index].row, col = units[activeUnit.index].col;
+		if (i.indexOf('move') == 0) {
+			switch (i) {
+			case 'moveU':
+				if (col % 2 == 0) row--; col--; break;
+			case 'moveI':
+				row--; break;
+			case 'moveO':
+				if (col % 2 == 0) row--; col++; break;
+			case 'moveJ':
+				if (col % 2 == 1) row++; col--; break;
+			case 'moveK':
+				row++; break;
+			case 'moveL':
+				if (col % 2 == 1) row++; col++; break;
+			}
+			if (isLegalMove(units[activeUnit.index], row, col)) {
+				x = units[activeUnit.index].x - units[activeUnit.index]._cache.width * units[activeUnit.index].scale.x / 4;
+				y = units[activeUnit.index].y - units[activeUnit.index]._cache.height * units[activeUnit.index].scale.y / 4;
+			}
+		}
+		actionSprites[i].body.x = x;
+		actionSprites[i].body.y = y;
+	});
+}
+function hideActions() {
+	// Hide Action Sprites
+	$.each(actionSprites, function(i, sprite) {
+		actionSprites[i].reset(-300, -300);
+		actionSprites[i].body.x = -300;
+		actionSprites[i].body.y = -300;
+	});
+	activeUnit.reset(-300, -300);
+	activeUnit.body.x = -300;
+	activeUnit.body.y = -300;
 }
 </script>
 </head>

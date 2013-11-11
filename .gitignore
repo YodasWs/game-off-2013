@@ -1,3 +1,7 @@
 ﻿#.gitignore
+phaser.js
 Thumbs.db
 *.Spp
+
+img-src/crawl-tiles
+img-src/black WinPhone icons
