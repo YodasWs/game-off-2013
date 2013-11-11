@@ -27,11 +27,13 @@ width = Math.max(Math.min($(document).width() * .95, 900), 600);
 game = new Phaser.Game(width, Math.floor(width * 16 / 9), Phaser.CANVAS, 'main', {
 preload : function() {
 //	game.load.image('background', 'www/img/terrain/grass.jpg'); // TODO: Get water/sea background
-	game.load.image('activeUnit', 'www/img/activeUnit.png');
+	game.stage.backgroundColor = 'lightseagreen';
+
 	// Load Terrain Images
 	$.each(['grass', 'water'], function(i, val) {
 		game.load.image('tile.' + val, 'www/img/tiles/' + val + '.png');
 	});
+
 	// Load Overlay Images
 	$.each(['roman', 'britton', 'saxon'], function(i, faction) {
 		game.load.image('city.' + faction, 'www/img/overlays/city-' + faction + '.png');
@@ -39,7 +41,12 @@ preload : function() {
 			game.load.image('unit.' + faction + '.' + unit, 'www/img/' + faction + '/' + unit + '.png');
 		});
 	});
-	game.stage.backgroundColor = 'lightseagreen';
+
+	// Load Action Images
+	game.load.image('activeUnit', 'www/img/activeUnit.png');
+	$.each(actionSprites, function(action, sprite) {
+		game.load.image(action, sprite.src);
+	});
 },
 create : function() {
 /*	// Add Background and Scale to Size
@@ -65,6 +72,12 @@ create : function() {
 		}
 	});
 
+	// Active Unit Overlay
+	$.extend(activeUnit, game.add.sprite(-300, -300, 'activeUnit'));
+	activeUnit.anchor = {x:.5,y:.5};
+	activeUnit.scale.x = scale.x;
+	activeUnit.scale.y = scale.y;
+
 	// Place Starting Units
 	$.each(units, function(i, unit) {
 		var x = unit.col * 74 + 20;
@@ -75,29 +88,22 @@ create : function() {
 		units[i].scale.x = scale.x;
 		units[i].scale.y = scale.y;
 		units[i].autoCull = true;
-		if (unit.faction == 'britton') {
-			activeUnit.index = i;
-			units[i].setInteractive(true);
-		}
 		$.extend(units[i], unitTypes[unit.uType]);
 	});
 
-	// Active Unit Overlay
-	$.extend(activeUnit, game.add.sprite(units[activeUnit.index].x, units[activeUnit.index].y, 'activeUnit'));
-	activeUnit.anchor = {x:.5,y:.5};
-	activeUnit.scale.x = scale.x;
-	activeUnit.scale.y = scale.y;
+	// Add Action Sprites
+	$.each(actionSprites, function(i, sprite) {
+		$.extend(actionSprites[i], game.add.sprite(-200, -200, i));
+		game.input.keyboard.addKeyCapture(sprite.key);
+		actionSprites[i].scale.x = scale.x;
+		actionSprites[i].scale.y = scale.y;
+		actionSprites[i].anchor = {x:.5,y:.5};
+	});
 
 	// Game Key Inputs
 	game.input.keyboard.addKeyCapture([
-		Phaser.Keyboard.U,
-		Phaser.Keyboard.I,
-		Phaser.Keyboard.O,
-		Phaser.Keyboard.J,
-		Phaser.Keyboard.K,
-		Phaser.Keyboard.L,
-		Phaser.Keyboard.W,
-		Phaser.Keyboard.SPACEBAR
+		Phaser.Keyboard.SPACEBAR,
+		Phaser.Keyboard.W
 	]);
 game.input.keyboard.addCallbacks(game, function(event) {
 	// On Key Down
@@ -151,6 +157,10 @@ game.input.keyboard.addCallbacks(game, function(event) {
 		// Now Move Unit
 		if (units[activeUnit.index].col != col || units[activeUnit.index].row != row) {
 			if (!isLegalMove(units[activeUnit.index], row, col)) return false;
+			$.each(actionSprites, function(i, sprite) {
+				actionSprites[i].reset(-300, -300);
+			});
+			hideActions();
 			units[activeUnit.index].moves--;
 			units[activeUnit.index].col = col;
 			units[activeUnit.index].row = row;
@@ -162,23 +172,36 @@ game.input.keyboard.addCallbacks(game, function(event) {
 		}
 	})(event); // end activeUnit
 });
+
+	// Start the Game
+	grabNextUnit();
 },
 update : function() {
 	$.each(units, function(i, unit) {
 		// 'return true' == 'continue'
 		// 'return false' == 'break'
+
+		// Not Moving, continue
 		if (unit.body.velocity.x == 0 && unit.body.velocity.y == 0)
 			return true;
+
+		// Continue Movement to Desired Hex
 		var x = unit.col * 74 + 20;
 		var y = unit.row * 86 + (unit.col % 2 ? 43 : 0);
 		unit.body.velocity.x = 0;
 		unit.body.velocity.y = 0;
 		unit.x = unit.body.x;
 		unit.y = unit.body.y;
+		hideActions();
 		if (Math.abs(unit.body.x - x) <= 1 && Math.abs(unit.body.y - y) <= 1) {
+			// We Arrived, Stop
 			unit.body.velocity.x = 0;
 			unit.body.velocity.y = 0;
+
+			// Grab next Unit
 			if (i == activeUnit.index && !(unit.moves > 0)) grabNextUnit();
+			else showActions();
+
 		} else game.physics.moveToXY(unit, x, y, null, 500);
 	});
 	if (activeUnit.index > -1) {
@@ -228,23 +251,57 @@ function grabNextUnit() {
 		}
 	});
 
-	// Set Active Unit
-	if (nextUnit > -1) {
-		activeUnit.index = nextUnit;
-		activeUnit.reset(units[nextUnit].x, units[nextUnit].y);
-	}
-
 	// No Units to Grab
-	if (nextUnit == -1) {
-		activeUnit.index = -1;
-		activeUnit.kill();
-		activeUnit.reset(-100, -100);
-		activeUnit.body.x = -100;
-		activeUnit.body.y = -100;
-		endTurn();
-	}
+	if (!(nextUnit > -1)) return endTurn();
+
+	// Set Active Unit
+	activeUnit.index = nextUnit;
+	showActions();
 }
 function endTurn() {
+	activeUnit.index = -1;
+	hideActions();
+}
+function showActions() {
+	if (!(activeUnit.index >= 0 && units[activeUnit.index].moves > 0)) return false;
+
+	// Show Action Sprites
+	$.each(actionSprites, function(i, sprite) {
+		var x = -300, y = -300, row = units[activeUnit.index].row, col = units[activeUnit.index].col;
+		if (i.indexOf('move') == 0) {
+			switch (i) {
+			case 'moveU':
+				if (col % 2 == 0) row--; col--; break;
+			case 'moveI':
+				row--; break;
+			case 'moveO':
+				if (col % 2 == 0) row--; col++; break;
+			case 'moveJ':
+				if (col % 2 == 1) row++; col--; break;
+			case 'moveK':
+				row++; break;
+			case 'moveL':
+				if (col % 2 == 1) row++; col++; break;
+			}
+			if (isLegalMove(units[activeUnit.index], row, col)) {
+				x = units[activeUnit.index].x - units[activeUnit.index]._cache.width * units[activeUnit.index].scale.x / 4;
+				y = units[activeUnit.index].y - units[activeUnit.index]._cache.height * units[activeUnit.index].scale.y / 4;
+			}
+		}
+		actionSprites[i].body.x = x;
+		actionSprites[i].body.y = y;
+	});
+}
+function hideActions() {
+	// Hide Action Sprites
+	$.each(actionSprites, function(i, sprite) {
+		actionSprites[i].reset(-300, -300);
+		actionSprites[i].body.x = -300;
+		actionSprites[i].body.y = -300;
+	});
+	activeUnit.reset(-300, -300);
+	activeUnit.body.x = -300;
+	activeUnit.body.y = -300;
 }
 </script>
 </head>
