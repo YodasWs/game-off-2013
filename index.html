@@ -17,9 +17,11 @@
 <script src="www/js/units.js"></script>
 <script>
 // Global Variables
-var width, game;
-var scale = { x:.5, y:.5 };
-var activeUnit = {index:-1};
+var	game,
+	width,
+	turn = 0,
+	scale = { x:.5, y:.5 },
+	activeUnit = {index:-1};
 
 $(document).ready(function() {
 width = Math.max(Math.min($(document).width() * .95, 900), 600);
@@ -157,10 +159,6 @@ game.input.keyboard.addCallbacks(game, function(event) {
 		// Now Move Unit
 		if (units[activeUnit.index].col != col || units[activeUnit.index].row != row) {
 			if (!isLegalMove(units[activeUnit.index], row, col)) return false;
-			$.each(actionSprites, function(i, sprite) {
-				actionSprites[i].reset(-300, -300);
-			});
-			hideActions();
 			units[activeUnit.index].moves--;
 			units[activeUnit.index].col = col;
 			units[activeUnit.index].row = row;
@@ -172,9 +170,7 @@ game.input.keyboard.addCallbacks(game, function(event) {
 		}
 	})(event); // end activeUnit
 });
-
-	// Start the Game
-	grabNextUnit();
+	endTurn();
 },
 update : function() {
 	$.each(units, function(i, unit) {
@@ -192,7 +188,6 @@ update : function() {
 		unit.body.velocity.y = 0;
 		unit.x = unit.body.x;
 		unit.y = unit.body.y;
-		hideActions();
 		if (Math.abs(unit.body.x - x) <= 1 && Math.abs(unit.body.y - y) <= 1) {
 			// We Arrived, Stop
 			unit.body.velocity.x = 0;
@@ -200,14 +195,14 @@ update : function() {
 
 			// Grab next Unit
 			if (i == activeUnit.index && !(unit.moves > 0)) grabNextUnit();
-			else showActions();
 
 		} else game.physics.moveToXY(unit, x, y, null, 500);
 	});
 	if (activeUnit.index > -1) {
-		activeUnit.body.x = units[activeUnit.index].body.x;
-		activeUnit.body.y = units[activeUnit.index].body.y;
-	}
+		if (units[activeUnit.index].body.velocity.x == 0 && units[activeUnit.index].body.velocity.y == 0) {
+			showActions();
+		} else hideActions();
+	} else hideActions();
 },
 render : function() {
 //game.debug.renderSpriteBody(units[activeUnit.index]);
@@ -256,11 +251,22 @@ function grabNextUnit() {
 
 	// Set Active Unit
 	activeUnit.index = nextUnit;
-	showActions();
+//	showActions();
 }
 function endTurn() {
+	turn++;
+
+	// Reset Units
 	activeUnit.index = -1;
-	hideActions();
+	$.each(units, function(i, unit) {
+		var archetype = unitTypes[unit.uType];
+		$.each(['moves', 'action'], function(i, val) {
+			unit[val] = archetype[val];
+		});
+	});
+
+	// Start the Next Turn
+	grabNextUnit();
 }
 function showActions() {
 	if (!(activeUnit.index >= 0 && units[activeUnit.index].moves > 0)) return false;
@@ -291,15 +297,15 @@ function showActions() {
 		actionSprites[i].body.x = x;
 		actionSprites[i].body.y = y;
 	});
+	activeUnit.body.x = units[activeUnit.index].body.x;
+	activeUnit.body.y = units[activeUnit.index].body.y;
 }
 function hideActions() {
 	// Hide Action Sprites
 	$.each(actionSprites, function(i, sprite) {
-		actionSprites[i].reset(-300, -300);
 		actionSprites[i].body.x = -300;
 		actionSprites[i].body.y = -300;
 	});
-	activeUnit.reset(-300, -300);
 	activeUnit.body.x = -300;
 	activeUnit.body.y = -300;
 }
