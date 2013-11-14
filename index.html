@@ -177,6 +177,12 @@ update : function() {
 		// 'return true' == 'continue'
 		// 'return false' == 'break'
 
+		if (unit.remove) {
+			unit.body.x = -300;
+			unit.body.y = -300;
+			unit.destroy();
+		}
+
 		// Not Moving, continue
 		if (unit.body.velocity.x == 0 && unit.body.velocity.y == 0)
 			return true;
@@ -198,6 +204,8 @@ update : function() {
 
 		} else game.physics.moveToXY(unit, x, y, null, 500);
 	});
+
+	// Display/Hide Action Sprites
 	if (activeUnit.index > -1) {
 		if (units[activeUnit.index].body.velocity.x == 0 && units[activeUnit.index].body.velocity.y == 0) {
 			showActions();
@@ -224,6 +232,11 @@ function isLegalMove(unit, row, col) {
 			return false;
 		}
 	});
+	if (target.city == 'roman') {
+		if (grabUnitsOnTile(row, col).length > 0)
+			return false;
+		else return true;
+	}
 	switch (target.terrain) {
 	case 'water':
 		return false;
@@ -254,7 +267,8 @@ function grabNextUnit() {
 //	showActions();
 }
 function endTurn() {
-	turn++;
+	var intUnits = 0,
+		rmRoman = 0;
 
 	// Reset Units
 	activeUnit.index = -1;
@@ -265,8 +279,37 @@ function endTurn() {
 		});
 	});
 
+console.log('Ending turn ' + turn);
+
+	intUnits = 0
+	// TODO: Move Roman Troops
+	$.each(units, function(i, unit) {	
+		if (turn == 0 || unit.faction != 'roman') return true;
+		if (!rmRoman && turn > 5 && ++intUnits > 10 - turn) {
+			units[i].remove = true;
+			rmRoman++;
+			return true;
+		}
+		if (getCity(14, 8) != 'roman' && rmRoman == 1 && getCity(units[i].row, units[i].col) != '') {
+			units[i].remove = true;
+			rmRoman++;
+			return true;
+		}
+	});
+
+	intUnits = 0;
+	// TODO: Move Saxon Troops
+	$.each(units, function(i, unit) {
+		if (turn == 0 || unit.faction != 'saxon') return true;
+		intUnits++;
+	});
+	// TODO: Add Saxon Units
+	if (turn > 5 && (turn % 2 || intUnits < 5 + turn)) {
+	}
+
 	// Start the Next Turn
 	grabNextUnit();
+	turn++;
 }
 function showActions() {
 	if (!(activeUnit.index >= 0 && units[activeUnit.index].moves > 0)) return false;
@@ -308,6 +351,23 @@ function hideActions() {
 	});
 	activeUnit.body.x = -300;
 	activeUnit.body.y = -300;
+}
+function grabUnitsOnTile(row, col) {
+	var arrUnits = [];
+	$.each(units, function(i, unit) {
+		if (row == unit.row && col == unit.col) arrUnits.push(i);
+	});
+	return arrUnits;
+}
+function getCity(row, col) {
+	var faction = '';
+	$.each(world, function(i, tile) {
+		if (tile.row == row && tile.col == col) {
+			faction = tile.city;
+			return false;
+		}
+	});
+	return faction;
 }
 </script>
 </head>
