@@ -173,6 +173,7 @@ game.input.keyboard.addCallbacks(game, function(event) {
 	endTurn();
 },
 update : function() {
+	var movingUnits = false;
 	$.each(units, function(i, unit) {
 		// 'return true' == 'continue'
 		// 'return false' == 'break'
@@ -180,7 +181,8 @@ update : function() {
 		if (unit.remove) {
 			unit.body.x = -300;
 			unit.body.y = -300;
-			unit.destroy();
+//			unit.destroy();
+			return true;
 		}
 
 		// Not Moving, continue
@@ -188,6 +190,7 @@ update : function() {
 			return true;
 
 		// Continue Movement to Desired Hex
+		movingUnits = true;
 		var x = unit.col * 74 + 20;
 		var y = unit.row * 86 + (unit.col % 2 ? 43 : 0);
 		unit.body.velocity.x = 0;
@@ -211,6 +214,8 @@ update : function() {
 			showActions();
 		} else hideActions();
 	} else hideActions();
+
+	if (!movingUnits && activeUnit.index == -1) grabNextUnit();
 },
 render : function() {
 //game.debug.renderSpriteBody(units[activeUnit.index]);
@@ -283,24 +288,49 @@ console.log('Ending turn ' + turn);
 
 	intUnits = 0
 	// TODO: Move Roman Troops
-	$.each(units, function(i, unit) {	
-		if (turn == 0 || unit.faction != 'roman') return true;
-		if (!rmRoman && turn > 5 && ++intUnits > 10 - turn) {
+	$.each(units, function(i, unit) {
+		var moveTo = null;
+		if (turn == 0) return false;
+		if (unit.faction != 'roman') return true;
+		var tile = getTile(unit.row, unit.col);
+//		if (!rmRoman && turn > 5 && ++intUnits > 10 - turn) {
+//			units[i].remove = true;
+//			rmRoman++;
+//			return true;
+//		}
+		if (getCity(14, 8) != 'roman' && rmRoman <= 1 && tile.city == '') {
 			units[i].remove = true;
 			rmRoman++;
 			return true;
 		}
-		if (getCity(14, 8) != 'roman' && rmRoman == 1 && getCity(units[i].row, units[i].col) != '') {
-			units[i].remove = true;
-			rmRoman++;
-			return true;
+		// Move Towards South Coast
+		if (unit.row < 10 + turn) {
+			if (isLegalMove(unit, unit.row + 1, unit.col)) {
+				moveTo = { row: unit.row + 1, col: unit.col };
+			} else if (isLegalMove(unit, unit.row + 1, unit.col + 1)) {
+				moveTo = { row: unit.row + 1, col: unit.col + 1 };
+			} else if (isLegalMove(unit, unit.row + 1, unit.col - 1)) {
+				moveTo = { row: unit.row + 1, col: unit.col - 1 };
+			} else if (unit.col < 6 && unit.col % 2 && isLegalMove(unit, unit.row, unit.col + 1)) {
+				moveTo = { row: unit.row, col: unit.col + 1 };
+			} else if (unit.col < 6 && unit.col % 2 == 0 && isLegalMove(unit, unit.row - 1, unit.col + 1)) {
+				moveTo = { row: unit.row - 1, col: unit.col + 1 };
+			}
+			if (moveTo) {
+				units[i].col = moveTo.col;
+				units[i].row = moveTo.row;
+				moveTo = getTileCoords(moveTo);
+				game.physics.moveToXY(unit, moveTo.x, moveTo.y, null, 500);
+				return true;
+			}
 		}
 	});
 
 	intUnits = 0;
 	// TODO: Move Saxon Troops
 	$.each(units, function(i, unit) {
-		if (turn == 0 || unit.faction != 'saxon') return true;
+		if (turn == 0) return false;
+		if (unit.faction != 'saxon') return true;
 		intUnits++;
 	});
 	// TODO: Add Saxon Units
@@ -308,7 +338,6 @@ console.log('Ending turn ' + turn);
 	}
 
 	// Start the Next Turn
-	grabNextUnit();
 	turn++;
 }
 function showActions() {
@@ -368,6 +397,28 @@ function getCity(row, col) {
 		}
 	});
 	return faction;
+}
+function getTile(row, col) {
+	var intTile = -1;
+	$.each(world, function(i, tile) {
+		if (tile.row == row && tile.col == col) {
+			intTile = i;
+			return false;
+		}
+	});
+	return intTile;
+}
+function getTileX(row, col) {
+	return col * 74 + 20;
+}
+function getTileY(row, col) {
+	return row * 86 + (col % 2 ? 43 : 0);
+}
+function getTileCoords(tile) {
+	var coords = { x: -300, y: -300 };
+	if ((!tile.row && tile.row !== 0) || (!tile.col && tile.col !== 0))
+		return coords;
+	return { x: getTileX(tile.row, tile.col), y: getTileY(tile.row, tile.col) };
 }
 </script>
 </head>
