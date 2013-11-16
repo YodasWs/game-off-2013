@@ -183,7 +183,7 @@
 	{terrain:'grass', col:5, row:16},
 	{terrain:'grass', col:6, row:16},
 	{terrain:'grass', col:7, row:16, city:'roman'},
-	{terrain:'grass', col:8, row:16},
+	{terrain:'grass', col:8, row:16, city:'britton'},
 	{terrain:'water', col:9, row:16},
 	{terrain:'water', col:10, row:16},
 	{terrain:'grass', col:0, row:17, city:'britton'},
