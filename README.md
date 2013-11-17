@@ -23,6 +23,7 @@ So, Welcome to Brython. Can you lead the people through these turbulent times?
 * [Icons8](http://icons8.com/download-huge-windows8-set/)
 * [Grass](http://seamlesstextures.deviantart.com/art/Grass-texture-seamless-393181884)
 * [St Tudy Village](http://en.wikipedia.org/wiki/File:St_Tudy_Village_-_geograph.org.uk_-_788054.jpg)
+* [German Mountain Village](http://www.wallpapers.rs/view/german_mountain_village-1152x864.html)
 
 ### Potential
 * Art
