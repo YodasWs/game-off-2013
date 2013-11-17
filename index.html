@@ -10,8 +10,8 @@
 <script src="www/res/zepto.min.js"></script>
 <!--
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
--->
 <script src="www/res/bootstrap.min.js"></script>
+-->
 <script src="www/res/phaser.min.js"></script>
 <script src="www/js/world.js"></script>
 <script src="www/js/units.js"></script>
@@ -37,8 +37,8 @@ preload : function() {
 	});
 
 	// Load Overlay Images
+	game.load.spritesheet('city', 'www/img/overlays/city.png', 200, 200);
 	$.each(['roman', 'britton', 'saxon'], function(i, faction) {
-		game.load.image('city.' + faction, 'www/img/overlays/city-' + faction + '.png');
 		$.each(unitTypes, function(unit, stats) {
 			game.load.image('unit.' + faction + '.' + unit, 'www/img/' + faction + '/' + unit + '.png');
 		});
@@ -68,7 +68,8 @@ create : function() {
 		});
 		// Add City Overlay
 		if (world[i].city) {
-			world[i].overlay = game.add.tileSprite(x, y, 200, 200, 'city.' + world[i].city);
+			world[i].overlay = game.add.sprite(x, y, 'city');
+			world[i].overlay.frame = frmOverlays.city[world[i].city];
 			world[i].overlay.scale.x = scale.x;
 			world[i].overlay.scale.y = scale.y;
 		}
@@ -209,9 +210,10 @@ update : function() {
 		} else game.physics.moveToXY(unit, x, y, null, 500);
 	});
 
-	// TODO: Update Tile Overlays
-	$.each(world, function(i, tile) {
-		if (tile.city) {
+	// Update Tile Overlays
+	if (!movingUnits && activeUnit.index == -1) $.each(world, function(i, tile) {
+		if (world[i].overlay && frmOverlays.city[tile.city] != world[i].overlay.frame) {
+			world[i].overlay.frame = frmOverlays.city[tile.city];
 		}
 	});
 
