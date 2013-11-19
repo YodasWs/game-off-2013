@@ -181,6 +181,8 @@ update : function() {
 		// 'return false' == 'break'
 
 		if (unit.remove) {
+			unit.col = 0;
+			unit.row = 0;
 			unit.body.x = -300;
 			unit.body.y = -300;
 //			unit.destroy();
@@ -212,7 +214,12 @@ update : function() {
 
 	// Update Tile Overlays
 	if (!movingUnits && activeUnit.index == -1) $.each(world, function(i, tile) {
-		if (world[i].overlay && frmOverlays.city[tile.city] != world[i].overlay.frame) {
+		if (world[i].overlay && !world[i].city) {
+			// City Destroyed
+			world[i].overlay.x = -300;
+			world[i].overlay.y = -300;
+		} else if (world[i].overlay && frmOverlays.city[tile.city] != world[i].overlay.frame) {
+			// City Changed Ownership
 			world[i].overlay.frame = frmOverlays.city[tile.city];
 		}
 	});
@@ -243,10 +250,14 @@ function isLegalMove(unit, row, col) {
 	target = world[getTile(row, col)];
 
 	// Check Move into Roman City
-	if (target.city == 'roman' && unit.faction == 'britton') {
-		if (grabUnitsOnTile(row, col).length > 0)
-			return false;
-		else return true;
+	switch (target.city) {
+	case 'roman':
+		switch (unit.faction) {
+		case 'britton':
+			if (grabUnitsOnTile(row, col).length > 0)
+				return false;
+			else return true;
+		}
 	}
 
 	// Check for Battle
@@ -378,7 +389,49 @@ console.log('Ending turn ' + turn);
 		if (turn == 0) return false;
 		if (unit.remove) return true;
 		if (unit.faction != 'saxon') return true;
-		intUnits++;
+
+		var moveTo = { intTop: 0, sqrTop: '' },
+			neighbors = {
+				U:{ row: unit.row-(1-unit.col%2), col: unit.col-1 },
+				I:{ row: unit.row-1, col: unit.col },
+				O:{ row: unit.row-(1-unit.col%2), col: unit.col+1 },
+				J:{ row: unit.row+unit.col%2, col: unit.col-1 },
+				K:{ row: unit.row+1, col: unit.col },
+				L:{ row: unit.row+unit.col%2, col: unit.col+1 }
+			};
+
+		// Count Number of Saxon Units
+		if (unit.uType == 'soldier') intUnits++;
+
+		// TODO: Determine to Where to Move
+		$.each(neighbors, function(key, obj) {
+			obj.legalMove = isLegalMove(unit, obj.row, obj.col);
+			if (!obj.legalMove) return true;
+			moveTo = { intTop: 1, sqrTop: key };
+		});
+
+		// Determine Top Priority Tile
+		$.each(neighbors, function(key, obj) {
+			if (obj.priority > moveTo.intTop)
+				moveTo = { intTop: obj.priority, sqrTop: key };
+		});
+
+		// Move Unit
+		if (moveTo.sqrTop) {
+			moveTo = getTile(neighbors[moveTo.sqrTop].row, neighbors[moveTo.sqrTop].col);
+			if (world[moveTo].city) {
+				// Conquer Britton City
+				if (world[moveTo].city == 'britton') world[moveTo].city = 'saxon';
+				// Destroy Roman City
+				if (world[moveTo].city == 'roman') {
+					world[moveTo].city = null;
+				}
+			}
+			units[i].col = world[moveTo].col;
+			units[i].row = world[moveTo].row;
+			game.physics.moveToXY(unit, world[moveTo].x, world[moveTo].y, null, 500);
+			return true;
+		}
 	});
 	// TODO: Add Saxon Units
 	if (turn > 5 && (turn % 2 || intUnits < 5 + turn)) {
