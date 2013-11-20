@@ -389,15 +389,20 @@ console.log('Ending turn ' + turn);
 		if (turn == 0) return false;
 		if (unit.remove) return true;
 		if (unit.faction != 'saxon') return true;
+		var moveTo, uTile, neighbors;
 
-		var moveTo = { intTop: 0, sqrTop: '' },
+		while (units[i].moves > 0) {
+console.log('unit has ' + units[i].moves + ' moves');
+
+			moveTo = { intTop: 0, sqrTop: '' };
+			uTile = getTile(unit.row, unit.col);
 			neighbors = {
-				U:{ row: unit.row-(1-unit.col%2), col: unit.col-1 },
-				I:{ row: unit.row-1, col: unit.col },
-				O:{ row: unit.row-(1-unit.col%2), col: unit.col+1 },
-				J:{ row: unit.row+unit.col%2, col: unit.col-1 },
-				K:{ row: unit.row+1, col: unit.col },
-				L:{ row: unit.row+unit.col%2, col: unit.col+1 }
+				U:{ row: unit.row-(1-unit.col%2), col: unit.col-1, priority:0 },
+				I:{ row: unit.row-1, col: unit.col, priority:0 },
+				O:{ row: unit.row-(1-unit.col%2), col: unit.col+1, priority:0 },
+				J:{ row: unit.row+unit.col%2, col: unit.col-1, priority:0 },
+				K:{ row: unit.row+1, col: unit.col, priority:0 },
+				L:{ row: unit.row+unit.col%2, col: unit.col+1, priority:0 }
 			};
 
 		// Count Number of Saxon Units
@@ -405,14 +410,38 @@ console.log('Ending turn ' + turn);
 
 		// TODO: Determine to Where to Move
 		$.each(neighbors, function(key, obj) {
-			obj.legalMove = isLegalMove(unit, obj.row, obj.col);
-			if (!obj.legalMove) return true;
-			moveTo = { intTop: 1, sqrTop: key };
+			neighbors[key].legalMove = isLegalMove(unit, obj.row, obj.col);
+			if (!neighbors[key].legalMove) return true;
+			var nTile = getTile(obj.row, obj.col),
+				nUnits = [];
+
+			// Priority: Invade City
+			if (nTile.city && nTile.city != 'saxon') neighbors[key].priority += 2;
+
+			// Priority: Check for Units
+			nUnits = grabUnitsOnTile(obj.row, obj.col);
+			if (!nUnits.length) neighbors[key].priority += 0;
+			else if (units[nUnits[0]].faction == 'saxon') neighbors[key].priority += 1;
+			else if (units[nUnits[0]].faction != 'saxon') {
+				if (world[uTile].city == 'saxon') {
+					neighbors.U.legalMove = false;
+					neighbors.I.legalMove = false;
+					neighbors.O.legalMove = false;
+					neighbors.J.legalMove = false;
+					neighbors.K.legalMove = false;
+					neighbors.L.legalMove = false;
+					return false;
+				}
+				neighbors[key].priority += 2;
+				units[i].moves = 0;
+			}
 		});
 
 		// Determine Top Priority Tile
 		$.each(neighbors, function(key, obj) {
-			if (obj.priority > moveTo.intTop)
+			if (!obj.legalMove) return true;
+			if ((obj.priority > moveTo.intTop && Math.random() > .2)
+			    || (obj.priority == moveTo.intTop && Math.random() > .49))
 				moveTo = { intTop: obj.priority, sqrTop: key };
 		});
 
@@ -430,8 +459,10 @@ console.log('Ending turn ' + turn);
 			units[i].col = world[moveTo].col;
 			units[i].row = world[moveTo].row;
 			game.physics.moveToXY(unit, world[moveTo].x, world[moveTo].y, null, 500);
-			return true;
 		}
+		units[i].moves--;
+
+		} // End Moves Loop
 	});
 	// TODO: Add Saxon Units
 	if (turn > 5 && (turn % 2 || intUnits < 5 + turn)) {
