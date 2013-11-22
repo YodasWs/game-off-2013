@@ -58,9 +58,9 @@ create : function() {
 //*/
 	// Build the Board
 	$.each(world, function(i, item) {
-		var x = item.col * 74 + 20;
-		var y = item.row * 86 + (item.col % 2 ? 43 : 0);
-		$.extend(world[i], game.add.tileSprite(x, y, 200, 200, 'tile.' + item.terrain));
+		var x = getTileX(item.row, item.col);
+		var y = getTileY(item.row, item.col);
+		$.extend(world[i], game.add.tileSprite(x, y, 200, 200, 'tile.' + item.terrain), defaults.tile);
 		world[i].scale.x = scale.x;
 		world[i].scale.y = scale.y;
 		game.add.text(x+30, y+50, world[i].col + '×' + world[i].row, {
@@ -72,6 +72,7 @@ create : function() {
 			world[i].overlay.frame = frmOverlays.city[world[i].city];
 			world[i].overlay.scale.x = scale.x;
 			world[i].overlay.scale.y = scale.y;
+			$.extend(world[i].overlay, defaults.overlay);
 		}
 	});
 
@@ -83,15 +84,12 @@ create : function() {
 
 	// Place Starting Units
 	$.each(units, function(i, unit) {
-		var x = unit.col * 74 + 20;
-		var y = unit.row * 86 + (unit.col % 2 ? 43 : 0);
-		$.extend(units[i], game.add.sprite(x, y, 'unit.' + unit.faction + '.' + unit.uType));
+		var x = getTileX(unit.row, unit.col);
+		var y = getTileY(unit.row, unit.col);
+		$.extend(units[i], game.add.sprite(x, y, 'unit.' + unit.faction + '.' + unit.uType), unitTypes[unit.uType], defaults.units);
 		// Set Default Values
-		units[i].anchor = {x:.5,y:.5};
 		units[i].scale.x = scale.x;
 		units[i].scale.y = scale.y;
-		units[i].autoCull = true;
-		$.extend(units[i], unitTypes[unit.uType]);
 	});
 
 	// Add Action Sprites
@@ -163,8 +161,8 @@ game.input.keyboard.addCallbacks(game, function(event) {
 			units[activeUnit.index].moves--;
 			units[activeUnit.index].col = col;
 			units[activeUnit.index].row = row;
-			var x = units[activeUnit.index].col * 74 + 20;
-			var y = units[activeUnit.index].row * 86 + (units[activeUnit.index].col % 2 ? 43 : 0);
+			var x = getTileX(units[activeUnit.index].row, units[activeUnit.index].col);
+			var y = getTileY(units[activeUnit.index].row, units[activeUnit.index].col);
 			units[activeUnit.index].body.velocity.x = 0;
 			units[activeUnit.index].body.velocity.y = 0;
 			game.physics.moveToXY(units[activeUnit.index], x, y, null, 700);
@@ -195,8 +193,8 @@ update : function() {
 
 		// Continue Movement to Desired Hex
 		movingUnits = true;
-		var x = unit.col * 74 + 20;
-		var y = unit.row * 86 + (unit.col % 2 ? 43 : 0);
+		var x = getTileX(unit.row, unit.col);
+		var y = getTileY(unit.row, unit.col);
 		unit.body.velocity.x = 0;
 		unit.body.velocity.y = 0;
 		unit.x = unit.body.x;
@@ -292,6 +290,7 @@ function grabNextUnit() {
 
 	// Set Active Unit
 	activeUnit.index = nextUnit;
+//	units[activeUnit.index].bringToTop();
 }
 function endTurn() {
 	var intUnits = 0,
@@ -392,7 +391,6 @@ console.log('Ending turn ' + turn);
 		var moveTo, uTile, neighbors;
 
 		while (units[i].moves > 0) {
-console.log('unit has ' + units[i].moves + ' moves');
 
 			moveTo = { intTop: 0, sqrTop: '' };
 			uTile = getTile(unit.row, unit.col);
@@ -540,15 +538,15 @@ function getTile(row, col) {
 	return intTile;
 }
 function getTileX(row, col) {
+	if (!col && col !== 0) return -300;
 	return col * 74 + 20;
 }
 function getTileY(row, col) {
+	if ((!row && row !== 0) || (!col && col !== 0)) return -300;
 	return row * 86 + (col % 2 ? 43 : 0);
 }
 function getTileCoords(tile) {
-	var coords = { x: -300, y: -300 };
-	if ((!tile.row && tile.row !== 0) || (!tile.col && tile.col !== 0))
-		return coords;
+	if ((!tile.row && tile.row !== 0) || (!tile.col && tile.col !== 0)) return { x:-300, y:-300 };
 	return { x: getTileX(tile.row, tile.col), y: getTileY(tile.row, tile.col) };
 }
 </script>

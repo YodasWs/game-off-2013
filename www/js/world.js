@@ -1,4 +1,5 @@
 ﻿var board, frmOverlays, world;
+try{defaults=defaults||{}}catch(e){defaults={}};
 world = [
 	{terrain:'water', col:0, row:0},
 	{terrain:'water', col:1, row:0},
@@ -211,3 +212,9 @@ $.each(world, function(i, tile) {
 frmOverlays = {
 	city: { britton:0, roman:1, saxon:2 }
 };
+
+// Defaults for Tile and Overlay Sprites
+$.extend(defaults, {
+	overlay:{ outOfBoundsKill:true, autoCull:true },
+	tile:{ }
+});
