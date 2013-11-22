@@ -1,9 +1,11 @@
-﻿var world = [
+﻿var board, frmOverlays, world;
+try{defaults=defaults||{}}catch(e){defaults={}};
+world = [
 	{terrain:'water', col:0, row:0},
 	{terrain:'water', col:1, row:0},
 	{terrain:'water', col:2, row:0},
 	{terrain:'water', col:3, row:0},
-	{terrain:'water', col:4, row:0},
+	{terrain:'grass', col:4, row:0},
 	{terrain:'grass', col:5, row:0},
 	{terrain:'grass', col:6, row:0},
 	{terrain:'grass', col:7, row:0},
@@ -14,7 +16,7 @@
 	{terrain:'water', col:1, row:1},
 	{terrain:'water', col:2, row:1},
 	{terrain:'water', col:3, row:1},
-	{terrain:'water', col:4, row:1},
+	{terrain:'grass', col:4, row:1},
 	{terrain:'grass', col:5, row:1},
 	{terrain:'grass', col:6, row:1},
 	{terrain:'grass', col:7, row:1},
@@ -26,7 +28,7 @@
 	{terrain:'water', col:2, row:2},
 	{terrain:'water', col:3, row:2},
 	{terrain:'water', col:4, row:2},
-	{terrain:'water', col:5, row:2},
+	{terrain:'grass', col:5, row:2},
 	{terrain:'grass', col:6, row:2},
 	{terrain:'grass', col:7, row:2},
 	{terrain:'grass', col:8, row:2},
@@ -45,10 +47,10 @@
 	{terrain:'water', col:10, row:3},
 	{terrain:'water', col:0, row:4},
 	{terrain:'water', col:1, row:4},
-	{terrain:'grass', col:2, row:4},
-	{terrain:'grass', col:3, row:4},
-	{terrain:'grass', col:4, row:4},
-	{terrain:'grass', col:5, row:4},
+	{terrain:'water', col:2, row:4},
+	{terrain:'water', col:3, row:4},
+	{terrain:'water', col:4, row:4},
+	{terrain:'water', col:5, row:4},
 	{terrain:'grass', col:6, row:4},
 	{terrain:'grass', col:7, row:4},
 	{terrain:'grass', col:8, row:4},
@@ -78,12 +80,12 @@
 	{terrain:'water', col:10, row:6},
 	{terrain:'water', col:0, row:7},
 	{terrain:'water', col:1, row:7},
-	{terrain:'water', col:2, row:7},
+	{terrain:'grass', col:2, row:7},
 	{terrain:'grass', col:3, row:7},
 	{terrain:'grass', col:4, row:7},
 	{terrain:'grass', col:5, row:7},
 	{terrain:'grass', col:6, row:7},
-	{terrain:'grass', col:7, row:7, city:'saxon'},
+	{terrain:'grass', col:7, row:7},
 	{terrain:'grass', col:8, row:7},
 	{terrain:'grass', col:9, row:7},
 	{terrain:'water', col:10, row:7},
@@ -110,8 +112,8 @@
 	{terrain:'grass', col:9, row:9},
 	{terrain:'grass', col:10, row:9},
 	{terrain:'water', col:0, row:10},
-	{terrain:'grass', col:1, row:10},
-	{terrain:'grass', col:2, row:10},
+	{terrain:'water', col:1, row:10},
+	{terrain:'water', col:2, row:10},
 	{terrain:'grass', col:3, row:10},
 	{terrain:'grass', col:4, row:10},
 	{terrain:'grass', col:5, row:10},
@@ -198,9 +200,21 @@
 	{terrain:'water', col:9, row:17},
 	{terrain:'water', col:10, row:17}
 ];
+
 // Save Board Dimensions
-var board = {cols:0, rows:0};
+board = {cols:0, rows:0};
 $.each(world, function(i, tile) {
 	board.cols = Math.max(board.cols, tile.col+1);
 	board.rows = Math.max(board.rows, tile.row+1);
+});
+
+// Overlay Frames Constants
+frmOverlays = {
+	city: { britton:0, roman:1, saxon:2 }
+};
+
+// Defaults for Tile and Overlay Sprites
+$.extend(defaults, {
+	overlay:{ outOfBoundsKill:true, autoCull:true },
+	tile:{ }
 });
