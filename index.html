@@ -113,8 +113,11 @@ game.input.keyboard.addCallbacks(game, function(event) {
 	if (activeUnit.index >= 0 && units[activeUnit.index].moves > 0)
 	(function(event) {
 
-		var col = units[activeUnit.index].col;
-		var row = units[activeUnit.index].row;
+		var	col = units[activeUnit.index].col,
+			row = units[activeUnit.index].row,
+			tUnits = [], success = false,
+			x, y;
+
 		switch (event.keyCode) {
 		case Phaser.Keyboard.U:
 			// Move up and left
@@ -155,14 +158,22 @@ game.input.keyboard.addCallbacks(game, function(event) {
 			return false;
 		}
 
+		tUnits = grabUnitsOnTile(row, col);
+		if (tUnits.length > 0 && units[tUnits[0]].faction != units[activeUnit.index].faction) {
+			if (!units[activeUnit.index].attack) return false;
+			// Battle !
+			success = battle(activeUnit.index, tUnits[0]);
+			if (!success) return false;
+		}
+
 		// Now Move Unit
 		if (units[activeUnit.index].col != col || units[activeUnit.index].row != row) {
 			if (!isLegalMove(units[activeUnit.index], row, col)) return false;
 			units[activeUnit.index].moves--;
 			units[activeUnit.index].col = col;
 			units[activeUnit.index].row = row;
-			var x = getTileX(units[activeUnit.index].row, units[activeUnit.index].col);
-			var y = getTileY(units[activeUnit.index].row, units[activeUnit.index].col);
+			x = getTileX(units[activeUnit.index].row, units[activeUnit.index].col);
+			y = getTileY(units[activeUnit.index].row, units[activeUnit.index].col);
 			units[activeUnit.index].body.velocity.x = 0;
 			units[activeUnit.index].body.velocity.y = 0;
 			game.physics.moveToXY(units[activeUnit.index], x, y, null, 700);
@@ -178,7 +189,7 @@ update : function() {
 		// 'return true' == 'continue'
 		// 'return false' == 'break'
 
-		if (unit.remove) {
+		if (!unit.alive) {
 			unit.col = 0;
 			unit.row = 0;
 			unit.body.x = -300;
@@ -246,21 +257,22 @@ function isLegalMove(unit, row, col) {
 
 	// Grab Target Tile
 	target = world[getTile(row, col)];
+	tileUnits = grabUnitsOnTile(row, col);
 
 	// Check Move into Roman City
 	switch (target.city) {
 	case 'roman':
 		switch (unit.faction) {
 		case 'britton':
-			if (grabUnitsOnTile(row, col).length > 0)
-				return false;
+			if (tileUnits.length > 0) return false;
 			else return true;
 		}
 	}
 
 	// Check for Battle
-	tileUnits = grabUnitsOnTile(row, col);
-	if (tileUnits.length && units[tileUnits[0]].faction != unit.faction) return false;
+	if (tileUnits.length && units[tileUnits[0]].faction != unit.faction) {
+		if (unit.attack == 0) return false;
+	}
 
 	// Clear, Check Terrain
 	switch (target.terrain) {
@@ -308,26 +320,27 @@ function endTurn() {
 console.log('Ending turn ' + turn);
 
 	intUnits = 0
-	// TODO: Move Roman Troops
+	// Move Roman Troops
 	$.each(units, function(i, unit) {
 		if (turn == 0) return false;
-		if (unit.remove) return true;
+		if (!unit.alive) return true;
 		if (unit.faction != 'roman') return true;
 
 		var tile = getTile(unit.row, unit.col),
+			tileUnits = [],
 			moveTo = null;
 
 		// Remove Unit on Southern Coast
 		if (!rmRoman && turn > 5 && ++intUnits > 10 - turn && (
 		    (unit.row >= 15 && unit.col + unit.col % 2 >= 10) || (unit.row >= 16 && unit.col + unit.col % 2 >= 8))){
-			units[i].remove = true;
+			units[i].alive = false;
 			rmRoman++;
 			return true;
 		}
 
 		// Without London, Remove Second Unit
 		if (getCity(14, 8) != 'roman' && rmRoman == 1 && tile.city == '') {
-			units[i].remove = true;
+			units[i].alive = false;
 			rmRoman++;
 			return true;
 		}
@@ -370,8 +383,17 @@ console.log('Ending turn ' + turn);
 				}
 			}
 
-			// Move Unit Southwardly
 			if (moveTo) {
+
+				// Check for Battle
+				tileUnits = grabUnitsOnTile(moveTo.row, moveTo.col);
+				if (tileUnits.length > 0 && units[tileUnits[0]].faction != units[i].faction && units[i].attack > 0) {
+					// Battle !
+					success = battle(i, tileUnits[0]);
+					if (!success) return true;
+				}
+
+				// Move Unit Southwardly
 				moveTo = getTile(moveTo.row, moveTo.col);
 				if (world[moveTo].city) world[moveTo].city = 'roman';
 				units[i].col = world[moveTo].col;
@@ -386,7 +408,7 @@ console.log('Ending turn ' + turn);
 	// TODO: Move Saxon Troops
 	$.each(units, function(i, unit) {
 		if (turn == 0) return false;
-		if (unit.remove) return true;
+		if (!unit.alive) return true;
 		if (unit.faction != 'saxon') return true;
 		var moveTo, uTile, neighbors;
 
@@ -411,6 +433,7 @@ console.log('Ending turn ' + turn);
 			neighbors[key].legalMove = isLegalMove(unit, obj.row, obj.col);
 			if (!neighbors[key].legalMove) return true;
 			var nTile = getTile(obj.row, obj.col),
+				tileUnits = [],
 				nUnits = [];
 
 			// Priority: Invade City
@@ -442,6 +465,16 @@ console.log('Ending turn ' + turn);
 			    || (obj.priority == moveTo.intTop && Math.random() > .49))
 				moveTo = { intTop: obj.priority, sqrTop: key };
 		});
+
+		// Check for Battle
+		if (moveTo.sqrTop) {
+			tileUnits = grabUnitsOnTile(moveTo.row, moveTo.col);
+			if (tileUnits.length > 0 && units[tileUnits[0]].faction != units[i].faction && units[i].attack > 0) {
+				// Battle !
+				success = battle(i, tileUnits[0]);
+				if (!success) moveTo = false;
+			}
+		}
 
 		// Move Unit
 		if (moveTo.sqrTop) {
@@ -548,6 +581,21 @@ function getTileY(row, col) {
 function getTileCoords(tile) {
 	if ((!tile.row && tile.row !== 0) || (!tile.col && tile.col !== 0)) return { x:-300, y:-300 };
 	return { x: getTileX(tile.row, tile.col), y: getTileY(tile.row, tile.col) };
+}
+function battle(aU, dU) {
+	var	tileUnits = grabUnitsOnTile(units[dU].row, units[dU].col),
+		tile = getTile(units[dU].row, units[dU].col),
+		damage = 0;
+	do {
+		damage = 0;
+		damage += units[aU].attack / units[dU].defense * Math.random();
+		damage -= units[dU].attack / units[aU].defense * Math.random();
+		if (damage < 0) units[aU].damage(1);
+		if (damage > 0) units[dU].damage(1);
+console.log('aUnit: ' + units[aU].health + ', dUnit: ' + units[dU].health);
+	} while(units[aU].health >= 0 && units[dU].health >= 0);
+console.log(units[aU].health >= 0 ? 'attacker won' : 'defender won');
+	return (units[aU].health >= 0);
 }
 </script>
 </head>

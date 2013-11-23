@@ -7,7 +7,7 @@ units = [
 	{faction:'britton', uType:'soldier', col:5, row:12}
 ];
 unitTypes = {
-	soldier:{ health:2, moves:2 }
+	soldier:{ health:2, moves:2, attack:2, defense:2 }
 //	farmer:{ health:1, moves:1 },
 //	worker:{}
 };
