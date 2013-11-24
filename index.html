@@ -19,7 +19,6 @@
 // Global Variables
 var	game,
 	width,
-	turn = 0,
 	scale = { x:.5, y:.5 },
 	activeUnit = {index:-1};
 
@@ -30,6 +29,8 @@ game = new Phaser.Game(width, Math.floor(width * 16 / 9), Phaser.CANVAS, 'main',
 preload : function() {
 //	game.load.image('background', 'www/img/terrain/grass.jpg'); // TODO: Get water/sea background
 	game.stage.backgroundColor = 'lightseagreen';
+	game.turn = 0;
+	game.score = 0;
 
 	// Load Terrain Images
 	$.each(['grass', 'water'], function(i, val) {
@@ -163,7 +164,10 @@ game.input.keyboard.addCallbacks(game, function(event) {
 			if (!units[activeUnit.index].attack) return false;
 			// Battle !
 			success = battle(activeUnit.index, tUnits[0]);
-			if (!success) return false;
+			if (!success) {
+				grabNextUnit();
+				return false;
+			}
 		}
 
 		// Now Move Unit
@@ -272,6 +276,7 @@ function isLegalMove(unit, row, col) {
 	// Check for Battle
 	if (tileUnits.length && units[tileUnits[0]].faction != unit.faction) {
 		if (unit.attack == 0) return false;
+		if (units[tileUnits[0]].faction == 'britton' && unit.faction == 'roman') return false;
 	}
 
 	// Clear, Check Terrain
@@ -287,11 +292,13 @@ function isLegalMove(unit, row, col) {
 function grabNextUnit() {
 	var lastUnit = -1, nextUnit = -1;
 	$.each(units, function(i, unit) {
-		if (unit.faction == 'britton' && unit.moves > 0 && unit.action != 'stay') {
+		// 'return true' == 'continue'
+		// 'return false' == 'break'
+		if (unit.faction == 'britton' && unit.moves > 0 && unit.action != 'stay' && unit.alive) {
 			nextUnit = i;
 			if (lastUnit == -1) lastUnit = i;
 			if (nextUnit > activeUnit.index)
-				return false; // return false == 'break'
+				return false;
 			if (nextUnit == activeUnit.index)
 				nextUnit = lastUnit;
 		}
@@ -308,6 +315,8 @@ function endTurn() {
 	var intUnits = 0,
 		rmRoman = 0;
 
+	if (game.turn == 20) return endGame();
+
 	// Reset Units
 	activeUnit.index = -1;
 	$.each(units, function(i, unit) {
@@ -317,12 +326,12 @@ function endTurn() {
 		});
 	});
 
-console.log('Ending turn ' + turn);
+console.log('Ending turn ' + game.turn);
 
 	intUnits = 0
 	// Move Roman Troops
 	$.each(units, function(i, unit) {
-		if (turn == 0) return false;
+		if (game.turn == 0) return false;
 		if (!unit.alive) return true;
 		if (unit.faction != 'roman') return true;
 
@@ -331,7 +340,7 @@ console.log('Ending turn ' + turn);
 			moveTo = null;
 
 		// Remove Unit on Southern Coast
-		if (!rmRoman && turn > 5 && ++intUnits > 10 - turn && (
+		if (!rmRoman && game.turn > 5 && ++intUnits > 10 - game.turn && (
 		    (unit.row >= 15 && unit.col + unit.col % 2 >= 10) || (unit.row >= 16 && unit.col + unit.col % 2 >= 8))){
 			units[i].alive = false;
 			rmRoman++;
@@ -346,14 +355,14 @@ console.log('Ending turn ' + turn);
 		}
 
 		// Move Towards South Coast
-		if (unit.row < 10 + turn) {
+		if (unit.row < 10 + game.turn) {
 
 			// Stop on Southeast Coast
 			if ((unit.row >= 15 && unit.col + unit.col % 2 >= 10) || (unit.row >= 16 && unit.col + unit.col % 2 >= 8))
 				return true;
 
 			// Don't Abandon London Early
-			if (unit.row == 14 && unit.col == 8 && turn < 10) return true;
+			if (unit.row == 14 && unit.col == 8 && game.turn < 10) return true;
 
 			// Look for Legal Move
 			if (isLegalMove(unit, unit.row + 1, unit.col)) {
@@ -407,7 +416,7 @@ console.log('Ending turn ' + turn);
 	intUnits = 0;
 	// TODO: Move Saxon Troops
 	$.each(units, function(i, unit) {
-		if (turn == 0) return false;
+		if (game.turn == 0) return false;
 		if (!unit.alive) return true;
 		if (unit.faction != 'saxon') return true;
 		var moveTo, uTile, neighbors;
@@ -428,7 +437,7 @@ console.log('Ending turn ' + turn);
 		// Count Number of Saxon Units
 		if (unit.uType == 'soldier') intUnits++;
 
-		// TODO: Determine to Where to Move
+		// TODO: Determine Where to Move
 		$.each(neighbors, function(key, obj) {
 			neighbors[key].legalMove = isLegalMove(unit, obj.row, obj.col);
 			if (!neighbors[key].legalMove) return true;
@@ -468,7 +477,7 @@ console.log('Ending turn ' + turn);
 
 		// Check for Battle
 		if (moveTo.sqrTop) {
-			tileUnits = grabUnitsOnTile(moveTo.row, moveTo.col);
+			tileUnits = grabUnitsOnTile(neighbors[moveTo.sqrTop].row, neighbors[moveTo.sqrTop].col);
 			if (tileUnits.length > 0 && units[tileUnits[0]].faction != units[i].faction && units[i].attack > 0) {
 				// Battle !
 				success = battle(i, tileUnits[0]);
@@ -496,11 +505,11 @@ console.log('Ending turn ' + turn);
 		} // End Moves Loop
 	});
 	// TODO: Add Saxon Units
-	if (turn > 5 && (turn % 2 || intUnits < 5 + turn)) {
+	if (game.turn > 5 && (game.turn % 2 || intUnits < 5 + game.turn)) {
 	}
 
 	// Start the Next Turn
-	turn++;
+	game.turn++;
 }
 function showActions() {
 	if (!(activeUnit.index >= 0 && units[activeUnit.index].moves > 0)) return false;
@@ -586,16 +595,19 @@ function battle(aU, dU) {
 	var	tileUnits = grabUnitsOnTile(units[dU].row, units[dU].col),
 		tile = getTile(units[dU].row, units[dU].col),
 		damage = 0;
+	units[aU].moves = 0;
+console.log(units[aU].faction + ' attacking ' + units[dU].faction);
 	do {
 		damage = 0;
 		damage += units[aU].attack / units[dU].defense * Math.random();
 		damage -= units[dU].attack / units[aU].defense * Math.random();
 		if (damage < 0) units[aU].damage(1);
 		if (damage > 0) units[dU].damage(1);
-console.log('aUnit: ' + units[aU].health + ', dUnit: ' + units[dU].health);
 	} while(units[aU].health >= 0 && units[dU].health >= 0);
-console.log(units[aU].health >= 0 ? 'attacker won' : 'defender won');
 	return (units[aU].health >= 0);
+}
+function endGame() {
+	game.paused = true;
 }
 </script>
 </head>
