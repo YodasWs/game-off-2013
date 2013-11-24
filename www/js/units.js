@@ -8,8 +8,8 @@ units = [
 ];
 unitTypes = {
 	soldier:{ health:2, moves:2, attack:2, defense:2 }
-//	farmer:{ health:1, moves:1 },
-//	worker:{}
+//	farmer:{ health:1, moves:1, attack:0, defense:1 },
+//	worker:{ health:1, moves:1, attack:0, defense:1 }
 };
 
 // Defaults for Unit Sprites
