@@ -159,6 +159,8 @@ game.input.keyboard.addCallbacks(game, function(event) {
 			return false;
 		}
 
+		if (!isLegalMove(units[activeUnit.index], row, col)) return false;
+
 		tUnits = grabUnitsOnTile(row, col);
 		if (tUnits.length > 0 && units[tUnits[0]].faction != units[activeUnit.index].faction) {
 			if (!units[activeUnit.index].attack) return false;
@@ -172,7 +174,6 @@ game.input.keyboard.addCallbacks(game, function(event) {
 
 		// Now Move Unit
 		if (units[activeUnit.index].col != col || units[activeUnit.index].row != row) {
-			if (!isLegalMove(units[activeUnit.index], row, col)) return false;
 			units[activeUnit.index].moves--;
 			units[activeUnit.index].col = col;
 			units[activeUnit.index].row = row;
@@ -184,9 +185,24 @@ game.input.keyboard.addCallbacks(game, function(event) {
 		}
 	})(event); // end activeUnit
 });
+	$('#gameinfo').css({left:$('canvas').offset().left});
+	$(window).on('scroll', function(event) {
+		if ($(window).scrollTop() > $('canvas').offset().top) $('#gameinfo').css({
+			position:'fixed',top:'0px'
+		}); else $('#gameinfo').css({
+			position:'absolute',top:$('canvas').offset().top+'px'
+		});
+	}); // end document.scroll
 	endTurn();
 },
 update : function() {
+	// Update Game Info
+	$('#gameinfo').html('<b>Turn:</b> ' + game.turn + '<br/><b>Score:</b> ' + game.score);
+
+	if (game.paused) {
+		hideActions();
+		return false;
+	}
 	var movingUnits = false;
 
 	$.each(units, function(i, unit) {
@@ -608,6 +624,13 @@ console.log(units[aU].faction + ' attacking ' + units[dU].faction);
 }
 function endGame() {
 	game.paused = true;
+	activeUnit.index = -1;
+	$.each(units, function(i, unit) {
+		if (unit.uType == 'soldier') {
+			if (unit.faction == 'britton' && unit.alive) game.score++;
+			if (unit.faction != 'britton' && !unit.alive) game.score--;
+		}
+	});
 }
 </script>
 </head>
@@ -621,7 +644,7 @@ provinces in the east. Trade with the rest of the empire is becoming more and mo
 the empire in the name of one general or another. Barbarians from the north and across the seas are raiding the
 countryside.</p>
 <p>So, Welcome to Brython. Can you lead the people through these turbulent times?</p>
-<div id="keyboard"></div>
+<div id="gameinfo"></div>
 </main>
 </body>
 </html>
